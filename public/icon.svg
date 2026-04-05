@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <rect width="128" height="128" rx="24" fill="#111"/>
+
+  <!-- Rear wheel -->
+  <circle cx="42" cy="88" r="18" stroke="#fff" stroke-width="2.5" opacity="0.9"/>
+  <circle cx="42" cy="88" r="2" fill="#fff" opacity="0.6"/>
+
+  <!-- Front wheel -->
+  <circle cx="92" cy="88" r="18" stroke="#fff" stroke-width="2.5" opacity="0.9"/>
+  <circle cx="92" cy="88" r="2" fill="#fff" opacity="0.6"/>
+
+  <!-- Frame: seat tube, down tube, chain stay, seat stay -->
+  <path d="M42 88 L62 58 L92 88" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M42 88 L62 78 L92 88" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+  <path d="M62 58 L62 78" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Handlebars -->
+  <path d="M62 58 L78 52 L84 48" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Rider body (leaning forward) -->
+  <path d="M62 58 L58 42" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M58 42 L74 38" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Rider head -->
+  <circle cx="76" cy="36" r="5" fill="#fff"/>
+
+  <!-- Wind lines (flowing from left, behind rider) -->
+  <path d="M8 32 Q18 30 28 32" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
+  <path d="M6 44 Q14 42 24 44" stroke="#22c55e" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+  <path d="M10 56 Q18 54 26 56" stroke="#22c55e" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+</svg>
