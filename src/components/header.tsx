@@ -16,12 +16,12 @@ export function Header({ athleteName, onDisconnect, onHome, showBack }: HeaderPr
         {showBack && (
           <button
             onClick={onHome}
-            className="flex items-center justify-center w-8 h-8 -ml-1 rounded-full hover:bg-accent transition-colors"
-            aria-label="Back"
+            className="flex items-center gap-1 h-10 px-2 -ml-2 rounded-lg hover:bg-accent transition-colors text-sm font-medium"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
             </svg>
+            Back
           </button>
         )}
         <button
@@ -46,7 +46,9 @@ export function Header({ athleteName, onDisconnect, onHome, showBack }: HeaderPr
       <div className="flex items-center gap-2">
         {athleteName && (
           <button
-            onClick={onDisconnect}
+            onClick={() => {
+              if (window.confirm("Disconnect Strava?")) onDisconnect?.();
+            }}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             {athleteName}

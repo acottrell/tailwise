@@ -869,7 +869,7 @@ function RouteRow({
           <span className={`text-sm font-semibold tabular-nums shrink-0 ${windColor}`}>
             {rec.tailwindAdvantage > 0
               ? `${rec.tailwindAdvantage} mph`
-              : "—"}
+              : "-"}
           </span>
         )}
       </div>

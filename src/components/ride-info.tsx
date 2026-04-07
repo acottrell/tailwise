@@ -66,7 +66,7 @@ export function RideInfo({ weather, distanceMeters, elevationGainMeters }: RideI
   const elevationMeters = elevationGainMeters ? Math.round(elevationGainMeters) : null;
 
   // Estimate ride time at 17mph (27.4km/h)
-  const rideHours = distanceMeters ? (distanceMeters / 1609.344) / 17 : null;
+  const rideHours = distanceMeters ? (distanceMeters / 1609.344) / 16 : null;
   const rideTimeLabel = rideHours
     ? rideHours >= 1
       ? `~${Math.floor(rideHours)}h ${Math.round((rideHours % 1) * 60)}min`
@@ -86,7 +86,7 @@ export function RideInfo({ weather, distanceMeters, elevationGainMeters }: RideI
           }
           title="Distance"
           value={`${distanceMiles} mi (${distanceKm} km)`}
-          detail={rideTimeLabel ? `Estimated ${rideTimeLabel} at 17 mph (27 km/h)` : undefined}
+          detail={rideTimeLabel ? `Estimated ${rideTimeLabel} at ~16 mph avg` : undefined}
         />
       )}
       {elevationFeet != null && (

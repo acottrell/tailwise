@@ -128,7 +128,7 @@ export default function LbrccPage() {
           <div className="space-y-1">
             <h1 className="text-xl font-heading font-bold tracking-tight">Club Rides</h1>
             <p className="text-sm text-muted-foreground">
-              LBRCC — Leighton Buzzard Road Cycling Club
+              LBRCC, Leighton Buzzard Road Cycling Club
             </p>
           </div>
 

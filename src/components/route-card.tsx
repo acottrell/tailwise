@@ -70,7 +70,7 @@ export function RouteCard({ route, rank, onSelect }: RouteCardProps) {
               {route.cafeStop || route.destination || route.name}
             </h3>
           </div>
-          <p className="text-xs text-muted-foreground pl-5">
+          <p className="text-sm text-muted-foreground pl-5">
             {distanceMiles}mi ({distanceKm}km)
             {elevationFt && ` · ${elevationFt}ft`}
             {route.routeType !== "loop" && ` · ${route.routeType}`}

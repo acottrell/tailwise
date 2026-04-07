@@ -79,6 +79,9 @@ export function SubmitRoute({ onBack }: SubmitRouteProps) {
           Share a Strava route with the community. Your name or club will be
           shown alongside this route on Tailwise.
         </p>
+        <p className="text-xs text-muted-foreground">
+          Don&apos;t have Strava? Ask a clubmate to share the route link with you.
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -116,6 +119,9 @@ export function SubmitRoute({ onBack }: SubmitRouteProps) {
           <label className="text-sm font-medium" htmlFor="source-name">
             Your name or club (optional)
           </label>
+          <p className="text-xs text-muted-foreground">
+            Shown publicly on Tailwise alongside this route
+          </p>
           <input
             id="source-name"
             type="text"

@@ -90,39 +90,59 @@ export default function RoutePage() {
                 />
                 <CafeInfo
                   routeName={detail.route.name}
+                  cafeStop={detail.route.cafeStop}
                   coordinates={detail.route.coordinates}
                 />
                 <RoadClosures coordinates={detail.route.coordinates} />
+                <ShareButton
+                  routeId={detail.route.id}
+                  routeName={detail.route.name}
+                />
               </div>
-              <div className="flex items-center justify-between pt-2">
-                <ShareButton routeId={detail.route.id} />
-                <Button variant="outline" size="sm" onClick={handleHome}>
+              <div className="text-center pt-2">
+                <button
+                  onClick={handleHome}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
+                >
                   View today&apos;s rides
-                </Button>
+                </button>
               </div>
             </>
           )}
         </div>
       </main>
-      <footer className="border-t border-border px-4 py-3 text-center text-xs text-muted-foreground">
-        <a
-          href="https://github.com/acottrell"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-foreground transition-colors"
-        >
-          Built by Aaron Cottrell
-        </a>
-        {" · "}
-        Weather data from{" "}
-        <a
-          href="https://open-meteo.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-foreground transition-colors"
-        >
-          Open-Meteo
-        </a>
+      <footer className="border-t border-border px-4 py-3 text-center text-xs text-muted-foreground space-y-1">
+        <p>
+          Route library thanks to{" "}
+          <a
+            href="https://lbrcc.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-foreground transition-colors"
+          >
+            LBRCC
+          </a>
+        </p>
+        <p>
+          <a
+            href="https://acottrell.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-foreground transition-colors"
+          >
+            Built by Aaron Cottrell
+          </a>
+          {" · "}
+          Weather data from{" "}
+          <a
+            href="https://open-meteo.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-foreground transition-colors"
+          >
+            Open-Meteo
+          </a>
+        </p>
       </footer>
     </div>
   );

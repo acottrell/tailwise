@@ -42,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
     if (announcements.length > 0) {
       description = announcements[0].title;
       if (announcements[0].body) {
-        description += ` — ${announcements[0].body}`;
+        description += ` · ${announcements[0].body}`;
       }
     } else if (upcomingRides.length > 0) {
       const groups = upcomingRides
@@ -51,7 +51,7 @@ export async function generateMetadata(): Promise<Metadata> {
             `${r.groupName}: ${r.route.cafeStop || r.route.destination || r.route.name}`
         )
         .join(" · ");
-      description = `${getNextSunday()} — ${groups}`;
+      description = `${getNextSunday()} · ${groups}`;
     }
   } catch {
     // Fall back to default description
@@ -63,14 +63,14 @@ export async function generateMetadata(): Promise<Metadata> {
     title,
     description,
     openGraph: {
-      title: "LBRCC — This week's rides",
+      title: "LBRCC · This week's rides",
       description,
       siteName: "Tailwise",
       type: "website",
     },
     twitter: {
       card: "summary",
-      title: "LBRCC — This week's rides",
+      title: "LBRCC · This week's rides",
       description,
     },
   };
