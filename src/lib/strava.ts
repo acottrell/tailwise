@@ -1,5 +1,46 @@
-import { STRAVA_API_BASE } from "@/constants";
+import { STRAVA_API_BASE, STRAVA_TOKEN_URL } from "@/constants";
 import { StravaRoute } from "./types";
+
+// Server-side token cache — auto-refreshes using the refresh token
+let cachedToken: { accessToken: string; expiresAt: number } | null = null;
+
+export async function getServerAccessToken(): Promise<string> {
+  // Return cached token if still valid (with 5 min buffer)
+  if (cachedToken && cachedToken.expiresAt > Date.now() / 1000 + 300) {
+    return cachedToken.accessToken;
+  }
+
+  const clientId = process.env.STRAVA_CLIENT_ID;
+  const clientSecret = process.env.STRAVA_CLIENT_SECRET;
+  const refreshToken = process.env.STRAVA_REFRESH_TOKEN;
+
+  if (!clientId || !clientSecret || !refreshToken) {
+    throw new Error("STRAVA_CONFIG_MISSING");
+  }
+
+  const response = await fetch(STRAVA_TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: "refresh_token",
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("UNAUTHORIZED");
+  }
+
+  const data = await response.json();
+  cachedToken = {
+    accessToken: data.access_token,
+    expiresAt: data.expires_at,
+  };
+
+  return data.access_token;
+}
 
 export function extractRouteId(url: string): string | null {
   const match = url.match(/strava\.com\/routes\/(\d+)/);
