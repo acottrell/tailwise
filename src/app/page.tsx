@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Header } from "@/components/header";
 import { RecommendFeed } from "@/components/recommend-feed";
@@ -35,8 +35,28 @@ type View =
   | { type: "check-specific" }
   | { type: "submit" };
 
+function WindTransition({ active }: { active: boolean }) {
+  if (!active) return null;
+  return (
+    <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="absolute left-0 h-0.5 bg-primary/30 rounded-full"
+          style={{
+            top: `${35 + i * 15}%`,
+            width: "40%",
+            animation: `windStreak 400ms ease-out ${i * 60}ms forwards`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function Home() {
   const [view, setView] = useState<View>({ type: "feed" });
+  const [transitioning, setTransitioning] = useState(false);
 
   // Route detail (from library)
   const {
@@ -63,11 +83,15 @@ export default function Home() {
   const [checkError, setCheckError] = useState<string | null>(null);
 
   const handleSelectRoute = useCallback(
-    async (routeId: string) => {
-      setView({ type: "route-detail", routeId });
+    async (routeId: string, departureTime?: Date) => {
+      setTransitioning(true);
+      setTimeout(() => {
+        setView({ type: "route-detail", routeId });
+        setTransitioning(false);
+      }, 250);
       track("route_viewed", { routeId });
       try {
-        await loadDetail(routeId);
+        await loadDetail(routeId, departureTime);
       } catch {
         // error state handled by hook
       }
@@ -128,6 +152,7 @@ export default function Home() {
 
   return (
     <div className="min-h-full flex flex-col">
+      <WindTransition active={transitioning} />
       <Header
         athleteName={athlete?.firstName}
         onDisconnect={disconnect}
@@ -140,6 +165,7 @@ export default function Home() {
             onSelectRoute={handleSelectRoute}
             onCheckSpecific={handleCheckSpecific}
             onSubmitRoute={handleSubmitRoute}
+            athleteName={athlete?.firstName}
           />
         )}
 
@@ -175,6 +201,7 @@ export default function Home() {
                     routeName={detail.route.name}
                     routeType={detail.route.routeType as RouteType}
                     stravaRouteId={detail.route.stravaRouteId}
+                    windDirectionDeg={detail.weather.windDirectionDeg}
                   />
                   <RouteMap
                     coordinates={detail.route.coordinates}
@@ -211,6 +238,7 @@ export default function Home() {
                     routeName={stravaRoute.name}
                     routeType={parsedRoute.routeType}
                     stravaRouteId={stravaRoute.id?.toString() ?? null}
+                    windDirectionDeg={weatherResult.weather.windDirectionDeg}
                   />
                   <RouteMap
                     coordinates={parsedRoute.coordinates}

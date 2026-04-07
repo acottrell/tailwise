@@ -38,7 +38,7 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-center gap-3 px-4 py-2.5">
-      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary/70">
         {icon}
       </div>
       <div className="flex-1 min-w-0">

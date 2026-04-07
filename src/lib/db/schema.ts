@@ -57,6 +57,7 @@ export const weeklyAnnouncements = pgTable("weekly_announcements", {
   weekStart: date("week_start").notNull(), // Monday of the applicable week
   title: text("title").notNull(),
   body: text("body"),
+  url: text("url"), // external link, e.g. British Cycling event page
   routeId: text("route_id").references(() => routes.id), // optional, for event rides
   createdAt: timestamp("created_at").defaultNow(),
 });

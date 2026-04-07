@@ -22,6 +22,7 @@ const announcementSchema = z.object({
   weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   title: z.string().min(1).max(200),
   body: z.string().max(1000).optional(),
+  url: z.string().url().max(500).optional(),
   routeId: z.string().optional(),
 });
 
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { weekStart, title, body: announcementBody, routeId } = parsed.data;
+  const { weekStart, title, body: announcementBody, url, routeId } = parsed.data;
 
   const cleanTitle = sanitizeOrReject(title, 200);
   if (!cleanTitle) {
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
     weekStart,
     title: cleanTitle,
     body: cleanBody || null,
+    url: url || null,
     routeId: routeId || null,
   });
 

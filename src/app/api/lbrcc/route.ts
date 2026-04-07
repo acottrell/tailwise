@@ -13,7 +13,7 @@ function getMonday(d: Date): string {
   const day = date.getDay();
   const diff = day === 0 ? -6 : 1 - day;
   date.setDate(date.getDate() + diff);
-  return date.toISOString().split("T")[0];
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 export async function GET(request: NextRequest) {
@@ -104,6 +104,7 @@ export async function GET(request: NextRequest) {
     weekStart: a.weekStart,
     title: a.title,
     body: a.body,
+    url: a.url,
     route: a.route
       ? {
           id: a.route.id,
