@@ -16,12 +16,12 @@ interface RecommendFeedProps {
   athleteName?: string;
 }
 
-const FILTERS: { key: DistanceFilter; label: string }[] = [
+const FILTERS: { key: DistanceFilter; label: string; range?: string }[] = [
   { key: "all", label: "All" },
-  { key: "short", label: "Short" },
-  { key: "medium", label: "Medium" },
-  { key: "long", label: "Long" },
-  { key: "long+", label: "Long+" },
+  { key: "short", label: "Short", range: "Under 30mi" },
+  { key: "medium", label: "Medium", range: "30–50mi" },
+  { key: "long", label: "Long", range: "50–80mi" },
+  { key: "long+", label: "Long+", range: "80mi+" },
 ];
 
 function formatTime(date: Date): string {
@@ -45,13 +45,13 @@ function getTimeLabel(departureKey: string): { title: string; timeWord: string }
 
 function getWindSummary(windDeg: number, windMph: number, timeWord: string): string {
   const dir = compassDirection(windDeg);
-  if (windMph < 5) return `Light winds ${timeWord} \u2014 ride any direction`;
+  if (windMph < 5) return `Light winds ${timeWord}, ride any direction`;
   const opposite: Record<string, string> = {
     N: "south", NE: "southwest", E: "west", SE: "northwest",
     S: "north", SW: "northeast", W: "east", NW: "southeast",
   };
   const best = opposite[dir] || "downwind";
-  if (windMph >= 15) return `Strong wind ${timeWord} \u2014 consider riding ${best}`;
+  if (windMph >= 15) return `Strong wind ${timeWord}, consider riding ${best}`;
   return `Consider riding ${best} ${timeWord}`;
 }
 
@@ -190,12 +190,12 @@ export function RecommendFeed({
           {weather ? (
             <div className="flex items-center gap-2.5">
               <WindCompass windDirectionDeg={weather.windDirectionDeg} size={28} />
-              <div>
+              <div className="flex flex-col">
                 <span className="text-sm font-semibold">
-                  {compassDirection(weather.windDirectionDeg)} {Math.round(weather.windSpeedMph)} mph
+                  Wind {compassDirection(weather.windDirectionDeg)} {Math.round(weather.windSpeedMph)} mph
                   <span className="font-normal text-muted-foreground"> ({Math.round(weather.windSpeedMph * 1.60934)} km/h)</span>
                 </span>
-                <span className="text-xs text-muted-foreground ml-1.5">
+                <span className="text-xs text-muted-foreground">
                   {Math.round(weather.temperatureCelsius)}°C · {weather.precipitationProbability}% rain
                 </span>
               </div>
@@ -260,6 +260,11 @@ export function RecommendFeed({
             </button>
           ))}
         </div>
+        {distance !== "all" && (
+          <p className="text-xs text-muted-foreground text-center">
+            {FILTERS.find((f) => f.key === distance)?.range}
+          </p>
+        )}
       </div>
 
       {/* Route cards */}

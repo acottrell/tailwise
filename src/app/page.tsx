@@ -35,6 +35,25 @@ type View =
   | { type: "check-specific" }
   | { type: "submit" };
 
+function formatDepartureLabel(departure?: Date): string | null {
+  if (!departure) return null;
+  const now = new Date();
+  const isToday = departure.toDateString() === now.toDateString();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const isTomorrow = departure.toDateString() === tomorrow.toDateString();
+
+  const h = departure.getHours();
+  const m = departure.getMinutes();
+  const period = h >= 12 ? "pm" : "am";
+  const h12 = h % 12 || 12;
+  const time = m === 0 ? `${h12}${period}` : `${h12}:${m.toString().padStart(2, "0")}${period}`;
+
+  if (isToday) return `Conditions now`;
+  if (isTomorrow) return `Conditions for tomorrow ${time}`;
+  return `Conditions for ${departure.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })} ${time}`;
+}
+
 function WindTransition({ active }: { active: boolean }) {
   if (!active) return null;
   return (
@@ -57,6 +76,7 @@ function WindTransition({ active }: { active: boolean }) {
 export default function Home() {
   const [view, setView] = useState<View>({ type: "feed" });
   const [transitioning, setTransitioning] = useState(false);
+  const [selectedDeparture, setSelectedDeparture] = useState<Date | undefined>();
 
   // Route detail (from library)
   const {
@@ -82,9 +102,20 @@ export default function Home() {
   } = useWeather();
   const [checkError, setCheckError] = useState<string | null>(null);
 
+  // Browser back button support
+  useEffect(() => {
+    const handlePopState = () => {
+      setView({ type: "feed" });
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   const handleSelectRoute = useCallback(
     async (routeId: string, departureTime?: Date) => {
+      setSelectedDeparture(departureTime);
       setTransitioning(true);
+      window.history.pushState({ view: "route-detail", routeId }, "");
       setTimeout(() => {
         setView({ type: "route-detail", routeId });
         setTransitioning(false);
@@ -112,11 +143,13 @@ export default function Home() {
   );
 
   const handleCheckSpecific = useCallback(() => {
+    window.history.pushState({ view: "check-specific" }, "");
     setView({ type: "check-specific" });
     setCheckError(null);
   }, []);
 
   const handleSubmitRoute = useCallback(() => {
+    window.history.pushState({ view: "submit" }, "");
     setView({ type: "submit" });
   }, []);
 
@@ -209,6 +242,11 @@ export default function Home() {
                     windDirectionDeg={detail.weather.windDirectionDeg}
                     windSpeedMph={detail.weather.windSpeedMph}
                   />
+                  {selectedDeparture && formatDepartureLabel(selectedDeparture) && (
+                    <p className="text-xs text-muted-foreground text-center">
+                      {formatDepartureLabel(selectedDeparture)}
+                    </p>
+                  )}
                   <RideInfo
                     weather={detail.weather}
                     distanceMeters={detail.route.distanceKm * 1000}
@@ -216,12 +254,14 @@ export default function Home() {
                   />
                   <CafeInfo
                     routeName={detail.route.name}
+                    cafeStop={detail.route.cafeStop}
                     coordinates={detail.route.coordinates}
                   />
                   <RoadClosures coordinates={detail.route.coordinates} />
-                </div>
-                <div className="pt-2">
-                  <ShareButton routeId={detail.route.id} />
+                  <ShareButton
+                    routeId={detail.route.id}
+                    routeName={detail.route.name}
+                  />
                 </div>
               </>
             )}
@@ -318,25 +358,38 @@ export default function Home() {
 
         {view.type === "submit" && <SubmitRoute onBack={handleHome} />}
       </main>
-      <footer className="border-t border-border px-4 py-3 text-center text-xs text-muted-foreground">
-        <a
-          href="https://github.com/acottrell"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-foreground transition-colors"
-        >
-          Built by Aaron Cottrell
-        </a>
-        {" · "}
-        Weather data from{" "}
-        <a
-          href="https://open-meteo.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-foreground transition-colors"
-        >
-          Open-Meteo
-        </a>
+      <footer className="border-t border-border px-4 py-3 text-center text-xs text-muted-foreground space-y-1">
+        <p>
+          Route library thanks to{" "}
+          <a
+            href="https://lbrcc.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-foreground transition-colors"
+          >
+            LBRCC
+          </a>
+        </p>
+        <p>
+          <a
+            href="https://acottrell.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-foreground transition-colors"
+          >
+            Built by Aaron Cottrell
+          </a>
+          {" · "}
+          Weather data from{" "}
+          <a
+            href="https://open-meteo.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-foreground transition-colors"
+          >
+            Open-Meteo
+          </a>
+        </p>
       </footer>
     </div>
   );

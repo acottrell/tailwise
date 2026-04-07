@@ -29,6 +29,7 @@ export interface RecommendResult {
     precipitationProbability: number;
     temperatureCelsius: number;
   } | null;
+  ridingInsight: string | null;
   recommendations: RouteRecommendation[];
   totalRoutes: number;
 }

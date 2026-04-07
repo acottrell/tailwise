@@ -5,6 +5,96 @@ import { fetchWeatherServer } from "@/lib/weather-server";
 import { getWeatherForWindow, estimateRideDuration } from "@/lib/weather-client";
 import { getRecommendation } from "@/lib/wind-advisor";
 
+interface HourlyEntry {
+  time: string;
+  windSpeedMph: number;
+  windDirectionDeg: number;
+  precipitationProbability: number;
+  temperatureCelsius: number;
+}
+
+function getRidingInsight(hourly: HourlyEntry[], departure: Date): string | null {
+  const now = new Date();
+  const isToday = departure.toDateString() === now.toDateString();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const isTomorrow = departure.toDateString() === tomorrow.toDateString();
+
+  // Get daylight hours (6am-8pm) for the departure day
+  const dayStart = new Date(departure);
+  dayStart.setHours(6, 0, 0, 0);
+  const dayEnd = new Date(departure);
+  dayEnd.setHours(20, 0, 0, 0);
+
+  const dayHours = hourly.filter((h) => {
+    const t = new Date(h.time);
+    return t >= dayStart && t <= dayEnd;
+  });
+
+  if (dayHours.length < 4) return null;
+
+  // Find current hour's wind for comparison
+  const currentHour = dayHours.find((h) => {
+    const t = new Date(h.time);
+    return t.getHours() === departure.getHours();
+  });
+  const currentWind = currentHour?.windSpeedMph ?? dayHours[0].windSpeedMph;
+
+  // Find the calmest 2-hour window
+  let calmestStart = 0;
+  let calmestAvg = Infinity;
+  for (let i = 0; i < dayHours.length - 1; i++) {
+    const avg = (dayHours[i].windSpeedMph + dayHours[i + 1].windSpeedMph) / 2;
+    if (avg < calmestAvg) {
+      calmestAvg = avg;
+      calmestStart = i;
+    }
+  }
+
+  const calmestHour = new Date(dayHours[calmestStart].time).getHours();
+  const dayLabel = isToday ? "today" : isTomorrow ? "tomorrow" : "";
+
+  // Check for rain
+  const highRainHours = dayHours.filter((h) => h.precipitationProbability > 60);
+  if (highRainHours.length > dayHours.length / 2) {
+    return `Wet ${dayLabel}, pack waterproofs`;
+  }
+
+  // Check if wind is consistently light
+  const avgWind = dayHours.reduce((s, h) => s + h.windSpeedMph, 0) / dayHours.length;
+  if (avgWind < 5) {
+    return `Light winds all day ${dayLabel}`;
+  }
+
+  // Check if wind changes significantly
+  const laterHours = dayHours.filter((h) => new Date(h.time).getHours() >= 14);
+  const laterAvg = laterHours.length > 0
+    ? laterHours.reduce((s, h) => s + h.windSpeedMph, 0) / laterHours.length
+    : avgWind;
+
+  const earlyHours = dayHours.filter((h) => new Date(h.time).getHours() < 12);
+  const earlyAvg = earlyHours.length > 0
+    ? earlyHours.reduce((s, h) => s + h.windSpeedMph, 0) / earlyHours.length
+    : avgWind;
+
+  if (laterAvg < earlyAvg * 0.6 && earlyAvg > 8) {
+    return `Wind eases after 2pm ${dayLabel}`;
+  }
+  if (earlyAvg < laterAvg * 0.6 && laterAvg > 8) {
+    return `Calmer morning ${dayLabel}, wind picks up later`;
+  }
+
+  // If calmest window is meaningfully calmer than current
+  if (calmestAvg < currentWind * 0.6 && currentWind > 8) {
+    const timeLabel = calmestHour <= 12
+      ? `${calmestHour}am`
+      : `${calmestHour - 12}pm`;
+    return `Calmest around ${timeLabel} ${dayLabel}`;
+  }
+
+  return null;
+}
+
 const querySchema = z.object({
   minDistanceKm: z.coerce.number().optional(),
   maxDistanceKm: z.coerce.number().optional(),
@@ -119,6 +209,8 @@ export async function GET(request: NextRequest) {
     recommendation,
   }));
 
+  const ridingInsight = getRidingInsight(hourly, departure);
+
   return NextResponse.json({
     weather: representativeWeather
       ? {
@@ -129,6 +221,7 @@ export async function GET(request: NextRequest) {
           temperatureCelsius: representativeWeather.temperatureCelsius,
         }
       : null,
+    ridingInsight,
     recommendations,
     totalRoutes: recommendations.length,
   });

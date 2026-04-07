@@ -5,6 +5,7 @@ import { Coordinate } from "@/lib/types";
 
 interface CafeInfoProps {
   routeName: string;
+  cafeStop?: string | null;
   coordinates: Coordinate[];
 }
 
@@ -40,8 +41,8 @@ function getCentroid(coords: Coordinate[]) {
   return { lat: lat / coords.length, lng: lng / coords.length };
 }
 
-export function CafeInfo({ routeName, coordinates }: CafeInfoProps) {
-  const cafeName = extractCafeName(routeName);
+export function CafeInfo({ routeName, cafeStop, coordinates }: CafeInfoProps) {
+  const cafeName = cafeStop || extractCafeName(routeName);
   if (!cafeName) return null;
 
   const centroid = getCentroid(coordinates);
