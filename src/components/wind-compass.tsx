@@ -26,7 +26,7 @@ export function WindCompass({
       width={size}
       height={size}
       className={`shrink-0 ${className}`}
-      aria-label={`Wind from ${Math.round(windDirectionDeg)}°`}
+      aria-label={`Wind blowing ${Math.round((windDirectionDeg + 180) % 360)}°`}
     >
       {/* Outer ring */}
       <circle
@@ -86,9 +86,9 @@ export function WindCompass({
           );
         })}
 
-      {/* Wind direction arrow — points FROM where wind is coming */}
+      {/* Wind direction arrow — points WHERE wind is blowing TO */}
       <g
-        transform={`rotate(${windDirectionDeg}, ${r}, ${r})`}
+        transform={`rotate(${(windDirectionDeg + 180) % 360}, ${r}, ${r})`}
         className="text-primary"
       >
         {/* Arrow shaft */}
