@@ -5,7 +5,7 @@ import { insertRoute, routeExistsByStravaId } from "@/lib/db/queries";
 import { decodePolyline } from "@/lib/polyline";
 import { analyzeRoute } from "@/lib/route-analyzer";
 import { centroid } from "@/lib/geo-utils";
-import { extractRouteId, fetchStravaRoute } from "@/lib/strava";
+import { extractRouteId, fetchStravaRoute, getServerAccessToken } from "@/lib/strava";
 import { sanitizeOrReject, isValidStravaUrl } from "@/lib/sanitize";
 
 const submitSchema = z.object({
@@ -91,15 +91,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const token = process.env.STRAVA_API_TOKEN;
-  if (!token) {
-    return NextResponse.json(
-      { error: "Server configuration error" },
-      { status: 500 }
-    );
-  }
-
   try {
+    const token = await getServerAccessToken();
     const strava = await fetchStravaRoute(routeIdStr, token);
     if (!strava.polyline) {
       return NextResponse.json(
@@ -147,7 +140,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Unknown error";
-    if (msg === "UNAUTHORIZED") {
+    if (msg === "UNAUTHORIZED" || msg === "STRAVA_CONFIG_MISSING") {
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 }

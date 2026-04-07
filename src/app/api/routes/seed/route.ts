@@ -5,7 +5,7 @@ import { insertRoute, routeExistsByStravaId } from "@/lib/db/queries";
 import { decodePolyline } from "@/lib/polyline";
 import { analyzeRoute } from "@/lib/route-analyzer";
 import { centroid } from "@/lib/geo-utils";
-import { extractRouteId, fetchStravaRoute } from "@/lib/strava";
+import { extractRouteId, fetchStravaRoute, getServerAccessToken } from "@/lib/strava";
 
 const routeSchema = z.object({
   stravaUrl: z.string().url(),
@@ -37,10 +37,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const token = process.env.STRAVA_API_TOKEN;
-  if (!token) {
+  let token: string;
+  try {
+    token = await getServerAccessToken();
+  } catch {
     return NextResponse.json(
-      { error: "STRAVA_API_TOKEN not configured" },
+      { error: "Strava credentials not configured" },
       { status: 500 }
     );
   }

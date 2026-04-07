@@ -3,7 +3,7 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import { insertRoute, routeExistsByStravaId } from "@/lib/db/queries";
 import { isValidStravaUrl } from "@/lib/sanitize";
-import { fetchStravaRoute } from "@/lib/strava";
+import { fetchStravaRoute, getServerAccessToken } from "@/lib/strava";
 import { decodePolyline } from "@/lib/polyline";
 import { analyzeRoute } from "@/lib/route-analyzer";
 import { centroid } from "@/lib/geo-utils";
@@ -62,15 +62,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const token = process.env.STRAVA_API_TOKEN;
-  if (!token) {
-    return NextResponse.json(
-      { error: "Strava integration not configured" },
-      { status: 500 }
-    );
-  }
-
   try {
+    const token = await getServerAccessToken();
     const strava = await fetchStravaRoute(routeIdStr, token);
     if (!strava.polyline) {
       return NextResponse.json(
