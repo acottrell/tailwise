@@ -8,10 +8,17 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function InstallBanner() {
+  // Disabled until we have regular returning users.
+  // To re-enable: remove the early return and the desktop guard below.
+  // Consider showing on visit 2-3 for mobile users only.
+  return null;
+
   const [show, setShow] = useState(false);
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
+    // Don't show on desktop browsers
+    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
     // Don't show if already dismissed or already in standalone mode
     if (localStorage.getItem("tw_installDismissed")) return;
     if (window.matchMedia("(display-mode: standalone)").matches) return;
