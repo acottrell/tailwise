@@ -20,9 +20,14 @@ export async function GET(
   const depStr = request.nextUrl.searchParams.get("departureTime");
   const departure = depStr ? new Date(depStr) : new Date();
 
+  const daysAhead = Math.max(
+    2,
+    Math.ceil((departure.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) + 1
+  );
   const { hourly, sunTimes } = await fetchWeatherServer(
     row.centroidLat,
-    row.centroidLng
+    row.centroidLng,
+    Math.min(daysAhead, 16)
   );
 
   const parsedRoute = dbRowToParsedRoute(row);

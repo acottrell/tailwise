@@ -28,12 +28,17 @@ export function Header({ athleteName, onDisconnect, onHome, showBack }: HeaderPr
           onClick={onHome}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
-          <svg viewBox="0 0 32 32" className="h-7 w-7" fill="none">
-            <circle cx="12" cy="22" r="5" stroke="currentColor" strokeWidth="1.5" />
-            <circle cx="24" cy="22" r="5" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M12 22l4-8 4 8M16 14l4-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="16" cy="12" r="1.5" fill="currentColor" />
-            <path d="M2 8h7M1 11h6M3 14h5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
+          <svg viewBox="0 0 36 28" className="h-7 w-auto" fill="none">
+            {/* Simplified cyclist */}
+            <circle cx="12" cy="21" r="5.5" stroke="currentColor" strokeWidth="1.4" />
+            <circle cx="25" cy="21" r="5.5" stroke="currentColor" strokeWidth="1.4" />
+            <path d="M12 21l5-9 5 9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M17 12l5-2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            <circle cx="17" cy="10" r="1.8" fill="currentColor" />
+            {/* Wind streaks trailing behind */}
+            <path d="M26 9h7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.5" />
+            <path d="M28 12h6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.35" />
+            <path d="M27 15h5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.2" />
           </svg>
           <span className="font-semibold text-lg tracking-tight">Tailwise</span>
         </button>

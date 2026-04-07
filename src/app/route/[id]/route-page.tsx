@@ -75,6 +75,7 @@ export default function RoutePage() {
                   routeName={detail.route.name}
                   routeType={detail.route.routeType as RouteType}
                   stravaRouteId={detail.route.stravaRouteId}
+                  windDirectionDeg={detail.weather.windDirectionDeg}
                 />
                 <RouteMap
                   coordinates={detail.route.coordinates}

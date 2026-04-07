@@ -6,11 +6,30 @@ interface WeatherServerResponse {
   sunTimes: SunTimes[];
 }
 
+// In-memory cache — survives across requests in dev and serverless warm starts
+const weatherCache = new Map<
+  string,
+  { data: WeatherServerResponse; timestamp: number }
+>();
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+function getCacheKey(lat: number, lng: number, forecastDays: number): string {
+  // Round coordinates to 2 decimal places (~1km) for cache hits
+  return `${lat.toFixed(2)},${lng.toFixed(2)},${forecastDays}`;
+}
+
 export async function fetchWeatherServer(
   lat: number,
   lng: number,
   forecastDays: number = 2
 ): Promise<WeatherServerResponse> {
+  const cacheKey = getCacheKey(lat, lng, forecastDays);
+  const cached = weatherCache.get(cacheKey);
+
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+
   const url = new URL(OPEN_METEO_BASE_URL);
   url.searchParams.set("latitude", lat.toFixed(4));
   url.searchParams.set("longitude", lng.toFixed(4));
@@ -51,5 +70,7 @@ export async function fetchWeatherServer(
     sunset: daily.sunset[i],
   }));
 
-  return { hourly, sunTimes };
+  const result = { hourly, sunTimes };
+  weatherCache.set(cacheKey, { data: result, timestamp: Date.now() });
+  return result;
 }

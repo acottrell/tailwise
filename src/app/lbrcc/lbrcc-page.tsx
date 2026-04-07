@@ -2,7 +2,16 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/header";
+import { WindCompass } from "@/components/wind-compass";
 import { Recommendation } from "@/lib/types";
+
+const GROUP_LABELS: Record<string, string> = {
+  G1: "Group 1",
+  G2: "Group 2",
+  G3: "Group 3",
+  All: "All Groups",
+  LBRCC: "LBRCC",
+};
 
 interface RideRoute {
   id: string;
@@ -31,6 +40,7 @@ interface WeeklyAnnouncement {
   weekStart: string;
   title: string;
   body: string | null;
+  url: string | null;
   route: {
     id: string;
     name: string;
@@ -116,9 +126,9 @@ export default function LbrccPage() {
       <main className="flex-1 flex flex-col">
         <div className="max-w-2xl mx-auto w-full px-4 py-6 space-y-6">
           <div className="space-y-1">
-            <h1 className="text-xl font-semibold">LBRCC</h1>
+            <h1 className="text-xl font-heading font-bold tracking-tight">Club Rides</h1>
             <p className="text-sm text-muted-foreground">
-              Leighton Buzzard Road Cycling Club
+              LBRCC — Leighton Buzzard Road Cycling Club
             </p>
           </div>
 
@@ -146,6 +156,29 @@ export default function LbrccPage() {
               {a.body && (
                 <p className="text-sm text-muted-foreground">{a.body}</p>
               )}
+              {a.url && (
+                <a
+                  href={a.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-500 hover:underline transition-colors"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-3.5 w-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                  More info
+                </a>
+              )}
               {a.route && a.route.stravaRouteId && (
                 <a
                   href={`https://www.strava.com/routes/${a.route.stravaRouteId}`}
@@ -168,9 +201,10 @@ export default function LbrccPage() {
 
           {/* Upcoming rides */}
           {hasUpcoming ? (
-            Array.from(ridesByDate.entries()).map(([dateStr, rides]) => (
+            Array.from(ridesByDate.entries()).map(([dateStr, rides], idx) => (
               <div key={dateStr} className="space-y-3">
-                <h2 className="text-sm font-medium text-muted-foreground">
+                {idx > 0 && <hr className="border-border" />}
+                <h2 className="text-base font-heading font-semibold">
                   {formatRideDate(dateStr)}
                 </h2>
                 <div className="space-y-3">
@@ -218,7 +252,7 @@ export default function LbrccPage() {
                 >
                   <path d="M9 18l6-6-6-6" />
                 </svg>
-                Past rides
+                Past rides ({pastRides.length})
               </button>
               {showPast && (
                 <div className="space-y-2">
@@ -230,7 +264,7 @@ export default function LbrccPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <span className="text-xs font-medium text-muted-foreground">
-                            {ride.groupName}
+                            {GROUP_LABELS[ride.groupName] ?? ride.groupName}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {" "}
@@ -283,7 +317,7 @@ function RideCard({ ride }: { ride: WeeklyRide }) {
   const confidenceColor = !rec
     ? ""
     : rec.confidence === "strong"
-      ? "text-green-500"
+      ? "text-wind"
       : rec.confidence === "moderate"
         ? "text-foreground"
         : "text-muted-foreground";
@@ -294,9 +328,9 @@ function RideCard({ ride }: { ride: WeeklyRide }) {
         <div className="space-y-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-              {ride.groupName}
+              {GROUP_LABELS[ride.groupName] ?? ride.groupName}
             </span>
-            <h3 className="text-sm font-semibold truncate">
+            <h3 className="text-sm font-heading font-semibold truncate">
               {ride.route.cafeStop || ride.route.destination || ride.route.name}
             </h3>
           </div>
@@ -311,7 +345,7 @@ function RideCard({ ride }: { ride: WeeklyRide }) {
             href={`https://www.strava.com/routes/${ride.route.stravaRouteId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-full border border-border text-xs font-medium hover:bg-accent transition-colors"
+            className="inline-flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-full border border-border text-xs font-medium hover:bg-accent transition-colors min-h-[44px]"
           >
             <svg
               viewBox="0 0 24 24"

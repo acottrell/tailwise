@@ -9,6 +9,7 @@ const querySchema = z.object({
   minDistanceKm: z.coerce.number().optional(),
   maxDistanceKm: z.coerce.number().optional(),
   departureTime: z.string().optional(),
+  limit: z.coerce.number().optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -17,13 +18,14 @@ export async function GET(request: NextRequest) {
     minDistanceKm: searchParams.get("minDistanceKm") ?? undefined,
     maxDistanceKm: searchParams.get("maxDistanceKm") ?? undefined,
     departureTime: searchParams.get("departureTime") ?? undefined,
+    limit: searchParams.get("limit") ?? undefined,
   });
 
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
   }
 
-  const { minDistanceKm, maxDistanceKm, departureTime: depStr } = parsed.data;
+  const { minDistanceKm, maxDistanceKm, departureTime: depStr, limit } = parsed.data;
   const departure = depStr ? new Date(depStr) : new Date();
 
   const allRoutes = await findApprovedRoutes(minDistanceKm, maxDistanceKm);
@@ -33,9 +35,14 @@ export async function GET(request: NextRequest) {
 
   // Single weather call — all routes are in the same area
   const firstRoute = allRoutes[0];
+  const daysAhead = Math.max(
+    2,
+    Math.ceil((departure.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) + 1
+  );
   const { hourly, sunTimes } = await fetchWeatherServer(
     firstRoute.centroidLat,
-    firstRoute.centroidLng
+    firstRoute.centroidLng,
+    Math.min(daysAhead, 16)
   );
 
   // Score each route
@@ -65,16 +72,6 @@ export async function GET(request: NextRequest) {
     return b.score - a.score;
   });
 
-  // Feature upcoming event routes (within 7 days) at the top
-  const now = new Date();
-  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-  const eventRoutes = scored.filter((s) => {
-    if (!s.row.eventDate) return false;
-    const eventDate = new Date(s.row.eventDate + "T00:00:00");
-    const diff = eventDate.getTime() - now.getTime();
-    return diff >= -24 * 60 * 60 * 1000 && diff <= sevenDaysMs;
-  });
-
   const isAllFilter = !minDistanceKm && !maxDistanceKm;
 
   let ranked: typeof scored;
@@ -86,20 +83,18 @@ export async function GET(request: NextRequest) {
       { min: 50, max: 85 },    // Medium
       { min: 85, max: 130 },   // Long
     ];
-    const nonEventScored = scored.filter((s) => !eventRoutes.includes(s));
     const picks: typeof scored = [];
     for (const bucket of buckets) {
-      const best = nonEventScored.find(
+      const best = scored.find(
         (s) => s.row.distanceKm >= bucket.min && s.row.distanceKm < bucket.max
       );
       if (best) picks.push(best);
     }
-    // Event routes go first, then fill remaining slots with spread picks
-    ranked = [...eventRoutes, ...picks].slice(0, 3);
+    ranked = picks.slice(0, limit ?? 3);
+  } else if (limit) {
+    ranked = scored.slice(0, limit);
   } else {
-    // Specific filter: all routes ranked by score, events first
-    const nonEventRoutes = scored.filter((s) => !eventRoutes.includes(s));
-    ranked = [...eventRoutes, ...nonEventRoutes];
+    ranked = scored;
   }
 
   // Use weather from first route (representative for the area)

@@ -26,7 +26,7 @@ function verifyAdmin(request: NextRequest): boolean {
 }
 
 const rideSchema = z.object({
-  groupName: z.string().min(1).max(20),
+  groupName: z.string().min(1).max(50),
   routeId: z.string().optional(),
   stravaUrl: z.string().optional(),
   rideDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     parsed.data;
 
   // Sanitize text inputs
-  const cleanGroup = sanitizeOrReject(groupName, 20);
+  const cleanGroup = sanitizeOrReject(groupName, 50);
   if (!cleanGroup) {
     return NextResponse.json({ error: "Invalid group name" }, { status: 400 });
   }

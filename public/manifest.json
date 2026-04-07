@@ -1,0 +1,22 @@
+{
+  "name": "Tailwise",
+  "short_name": "Tailwise",
+  "description": "Wind-optimized cycling routes",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f0ea",
+  "theme_color": "#5a3a1a",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
