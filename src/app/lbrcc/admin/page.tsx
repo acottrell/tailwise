@@ -445,6 +445,9 @@ function AdminDashboard() {
   const windCompass = weather ? degToCompass(weather.windDirectionDeg) : null;
   const windSpeed = weather ? Math.round(weather.windSpeedMph) : null;
 
+  // ISO departure for route preview links
+  const departureIso = new Date(`${rideDate}T${departureTime}:00`).toISOString();
+
   // Combine recommended + search results, deduplicate
   const allRoutes = [...routes];
   for (const sr of searchResults) {
@@ -498,9 +501,9 @@ function AdminDashboard() {
                 Other
               </button>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-medium">Date</label>
+            <div className="flex items-center gap-4">
+              <div className="flex-1 space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Date</label>
                 <input
                   type="date"
                   value={rideDate}
@@ -508,11 +511,11 @@ function AdminDashboard() {
                     setRideDate(e.target.value);
                     setActivePreset("Other");
                   }}
-                  className="rounded-lg border border-border bg-card px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium">Depart</label>
+              <div className="flex-1 space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Depart</label>
                 <input
                   type="time"
                   value={departureTime}
@@ -520,7 +523,7 @@ function AdminDashboard() {
                     setDepartureTime(e.target.value);
                     setActivePreset("Other");
                   }}
-                  className="rounded-lg border border-border bg-card px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"
                 />
               </div>
             </div>
@@ -546,29 +549,45 @@ function AdminDashboard() {
             )}
           </div>
 
-          {/* Step 2: Route list with group toggles */}
-          <div className="space-y-2">
+          {/* Step 2: Search, filter, and route list */}
+          <div className="space-y-3">
             <h3 className="text-sm font-medium">
               Best routes for {formatDateShort(rideDate)}
             </h3>
 
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {(Object.keys(distanceRanges) as DistanceFilter[]).map((key) => (
-                <button
-                  key={key}
-                  onClick={() => setDistanceFilter(key)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    distanceFilter === key
-                      ? "bg-foreground text-background"
-                      : "bg-muted text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {distanceRanges[key].label}
-                </button>
-              ))}
+            {/* Search + distance filters */}
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search routes by name, cafe, or destination..."
+                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+              />
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {(Object.keys(distanceRanges) as DistanceFilter[]).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => setDistanceFilter(key)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      distanceFilter === key
+                        ? "bg-foreground text-background"
+                        : "bg-muted text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {distanceRanges[key].label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {loadingRoutes ? (
+            {/* Search status */}
+            {searchQuery.length >= 2 && searchLoading && (
+              <p className="text-xs text-muted-foreground">Searching...</p>
+            )}
+
+            {/* Route cards */}
+            {loadingRoutes && searchQuery.length < 2 ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
                   <div
@@ -586,9 +605,10 @@ function AdminDashboard() {
                     assignedGroups={assignments.get(route.id) ?? new Set()}
                     onToggleGroup={(group) => toggleGroup(route.id, group)}
                     onAddCustomGroup={(group) => toggleGroup(route.id, group)}
+                    departureIso={departureIso}
                   />
                 ))}
-                {allRoutes.length === 0 && (
+                {allRoutes.length === 0 && !loadingRoutes && (
                   <p className="text-sm text-muted-foreground">
                     No routes found
                   </p>
@@ -596,94 +616,60 @@ function AdminDashboard() {
               </div>
             )}
 
-            {/* Can't find it? — search library + add from Strava */}
+            {/* Add from Strava */}
             {!showSearch ? (
               <button
                 onClick={() => setShowSearch(true)}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
-                More routes
+                + Add route from Strava
               </button>
             ) : (
-              <div className="space-y-3 rounded-lg border border-border bg-card p-3">
-                <div className="space-y-2">
-                  <p className="text-xs font-medium">Search library</p>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by name, destination, or cafe..."
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
-                  />
-                  {searchLoading && (
-                    <p className="text-xs text-muted-foreground">Searching...</p>
-                  )}
-                  {searchResults.length > 0 && (
-                    <div className="space-y-2">
-                      {searchResults.map((route) => (
-                        <RouteRow
-                          key={route.id}
-                          route={route}
-                          assignedGroups={assignments.get(route.id) ?? new Set()}
-                          onToggleGroup={(group) => toggleGroup(route.id, group)}
-                          onAddCustomGroup={(group) => toggleGroup(route.id, group)}
-                        />
-                      ))}
+              <div className="space-y-2 rounded-lg border border-border bg-card p-3">
+                <p className="text-xs font-medium">Add from Strava</p>
+                <input
+                  type="text"
+                  value={stravaUrl}
+                  onChange={(e) => setStravaUrl(e.target.value)}
+                  placeholder="https://www.strava.com/routes/..."
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+                />
+                {stravaUrl.trim() && (
+                  <>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={stravaCafe}
+                        onChange={(e) => setStravaCafe(e.target.value)}
+                        placeholder="Cafe stop (optional)"
+                        maxLength={100}
+                        className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+                      />
+                      <input
+                        type="text"
+                        value={stravaDestination}
+                        onChange={(e) => setStravaDestination(e.target.value)}
+                        placeholder="Destination (optional)"
+                        maxLength={100}
+                        className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+                      />
                     </div>
-                  )}
-                  {searchQuery.length >= 2 && !searchLoading && searchResults.length === 0 && (
-                    <p className="text-xs text-muted-foreground">No results</p>
-                  )}
-                </div>
-
-                <div className="border-t border-border pt-3 space-y-2">
-                  <p className="text-xs font-medium">Or add from Strava</p>
-                  <input
-                    type="text"
-                    value={stravaUrl}
-                    onChange={(e) => setStravaUrl(e.target.value)}
-                    placeholder="https://www.strava.com/routes/..."
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
-                  />
-                  {stravaUrl.trim() && (
-                    <>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={stravaCafe}
-                          onChange={(e) => setStravaCafe(e.target.value)}
-                          placeholder="Cafe stop (optional)"
-                          maxLength={100}
-                          className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
-                        />
-                        <input
-                          type="text"
-                          value={stravaDestination}
-                          onChange={(e) => setStravaDestination(e.target.value)}
-                          placeholder="Destination (optional)"
-                          maxLength={100}
-                          className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
-                        />
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={handleStravaAdd}
-                        disabled={stravaLoading || !stravaUrl.trim()}
-                        className="w-full"
-                      >
-                        {stravaLoading ? "Adding..." : "Add to library"}
-                      </Button>
-                    </>
-                  )}
-                  {stravaError && (
-                    <p className="text-xs text-red-500">{stravaError}</p>
-                  )}
-                </div>
-
+                    <Button
+                      size="sm"
+                      onClick={handleStravaAdd}
+                      disabled={stravaLoading || !stravaUrl.trim()}
+                      className="w-full"
+                    >
+                      {stravaLoading ? "Adding..." : "Add to library"}
+                    </Button>
+                  </>
+                )}
+                {stravaError && (
+                  <p className="text-xs text-red-500">{stravaError}</p>
+                )}
                 <button
                   onClick={() => {
                     setShowSearch(false);
-                    setSearchQuery("");
                     setStravaUrl("");
                     setStravaCafe("");
                     setStravaDestination("");
@@ -691,7 +677,7 @@ function AdminDashboard() {
                   }}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Close
+                  Cancel
                 </button>
               </div>
             )}
@@ -806,11 +792,13 @@ function RouteRow({
   assignedGroups,
   onToggleGroup,
   onAddCustomGroup,
+  departureIso,
 }: {
   route: RouteRec;
   assignedGroups: Set<string>;
   onToggleGroup: (group: string) => void;
   onAddCustomGroup: (group: string) => void;
+  departureIso: string;
 }) {
   const [customInput, setCustomInput] = useState("");
   const [showCustom, setShowCustom] = useState(false);
@@ -831,15 +819,23 @@ function RouteRow({
         ? "as planned"
         : "reverse";
 
+  const windLabel = !rec
+    ? null
+    : rec.tailwindAdvantage >= 5
+      ? "Strong tailwind"
+      : rec.tailwindAdvantage >= 2
+        ? "Good tailwind"
+        : rec.tailwindAdvantage >= 1
+          ? "Light tailwind"
+          : "Ride either direction";
+
   const windColor = !rec
     ? ""
-    : rec.tailwindAdvantage >= 5
+    : rec.tailwindAdvantage >= 2
       ? "text-green-500"
-      : rec.tailwindAdvantage >= 2
-        ? "text-green-500"
-        : rec.tailwindAdvantage >= 1
-          ? "text-foreground"
-          : "text-muted-foreground";
+      : "text-muted-foreground";
+
+  const previewHref = `/route/${route.id}?depart=${encodeURIComponent(departureIso)}`;
 
   const hasAssignment = assignedGroups.size > 0;
 
@@ -855,21 +851,27 @@ function RouteRow({
       }`}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 space-y-0.5">
-          <h4 className="text-sm font-medium truncate">
+        <a
+          href={previewHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="min-w-0 space-y-0.5 group"
+        >
+          <h4 className="text-sm font-medium truncate group-hover:underline flex items-center gap-1">
             {route.cafeStop || route.destination || route.name}
+            <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+              <path fillRule="evenodd" d="M5.22 14.78a.75.75 0 001.06 0l7.22-7.22v5.69a.75.75 0 001.5 0v-7.5a.75.75 0 00-.75-.75h-7.5a.75.75 0 000 1.5h5.69l-7.22 7.22a.75.75 0 000 1.06z" clipRule="evenodd" />
+            </svg>
           </h4>
           <p className="text-xs text-muted-foreground">
             {distanceMiles}mi
             {elevationFt && ` · ${elevationFt}ft`}
             {directionHint && ` · ${directionHint}`}
           </p>
-        </div>
-        {rec && (
-          <span className={`text-sm font-semibold tabular-nums shrink-0 ${windColor}`}>
-            {rec.tailwindAdvantage > 0
-              ? `${rec.tailwindAdvantage} mph`
-              : "-"}
+        </a>
+        {windLabel && (
+          <span className={`text-xs font-medium shrink-0 ${windColor}`}>
+            {windLabel}
           </span>
         )}
       </div>
