@@ -448,13 +448,11 @@ function AdminDashboard() {
   // ISO departure for route preview links
   const departureIso = new Date(`${rideDate}T${departureTime}:00`).toISOString();
 
-  // Combine recommended + search results, deduplicate
-  const allRoutes = [...routes];
-  for (const sr of searchResults) {
-    if (!allRoutes.find((r) => r.id === sr.id)) {
-      allRoutes.push(sr);
-    }
-  }
+  // When searching, show only search results; otherwise show recommendations
+  const isSearching = searchQuery.length >= 2;
+  const allRoutes = isSearching
+    ? searchResults
+    : routes;
 
   return (
     <div className="min-h-full flex flex-col">
@@ -501,8 +499,8 @@ function AdminDashboard() {
                 Other
               </button>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex-1 space-y-1">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">Date</label>
                 <input
                   type="date"
@@ -514,7 +512,7 @@ function AdminDashboard() {
                   className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"
                 />
               </div>
-              <div className="flex-1 space-y-1">
+              <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">Depart</label>
                 <input
                   type="time"
@@ -683,14 +681,14 @@ function AdminDashboard() {
             )}
           </div>
 
-          {/* Post bar — always visible */}
-          <div className="sticky bottom-4 bg-background border border-border rounded-lg p-3 shadow-lg space-y-3">
+          {/* Post bar */}
+          <div className="border border-border rounded-lg p-3 space-y-3">
             {/* Ride summary */}
             {totalAssigned > 0 && (
               <div className="space-y-2">
                 {Array.from(assignments.entries()).map(
                   ([routeId, groups]) => {
-                    const route = allRoutes.find((r) => r.id === routeId);
+                    const route = routes.find((r) => r.id === routeId) || searchResults.find((r) => r.id === routeId);
                     const name =
                       route?.cafeStop || route?.destination || route?.name || "";
                     return (
@@ -850,31 +848,33 @@ function RouteRow({
         hasAssignment ? "border-foreground/30 bg-accent/30" : "border-border bg-card"
       }`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <a
-          href={previewHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="min-w-0 space-y-0.5 group"
-        >
-          <h4 className="text-sm font-medium truncate group-hover:underline flex items-center gap-1">
+      <a
+        href={previewHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-start justify-between gap-2 -m-1 p-1 rounded active:bg-muted/50 transition-colors"
+      >
+        <div className="min-w-0 space-y-0.5">
+          <h4 className="text-sm font-medium truncate">
             {route.cafeStop || route.destination || route.name}
-            <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-              <path fillRule="evenodd" d="M5.22 14.78a.75.75 0 001.06 0l7.22-7.22v5.69a.75.75 0 001.5 0v-7.5a.75.75 0 00-.75-.75h-7.5a.75.75 0 000 1.5h5.69l-7.22 7.22a.75.75 0 000 1.06z" clipRule="evenodd" />
-            </svg>
           </h4>
           <p className="text-xs text-muted-foreground">
             {distanceMiles}mi
             {elevationFt && ` · ${elevationFt}ft`}
             {directionHint && ` · ${directionHint}`}
           </p>
-        </a>
-        {windLabel && (
-          <span className={`text-xs font-medium shrink-0 ${windColor}`}>
-            {windLabel}
-          </span>
-        )}
-      </div>
+        </div>
+        <div className="shrink-0 flex items-center gap-1">
+          {windLabel && (
+            <span className={`text-xs font-medium ${windColor}`}>
+              {windLabel}
+            </span>
+          )}
+          <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 text-muted-foreground">
+            <path fillRule="evenodd" d="M5.22 14.78a.75.75 0 001.06 0l7.22-7.22v5.69a.75.75 0 001.5 0v-7.5a.75.75 0 00-.75-.75h-7.5a.75.75 0 000 1.5h5.69l-7.22 7.22a.75.75 0 000 1.06z" clipRule="evenodd" />
+          </svg>
+        </div>
+      </a>
 
       {/* Group assignment */}
       <div className="flex items-center gap-1.5 flex-wrap">
