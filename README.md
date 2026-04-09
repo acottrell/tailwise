@@ -18,7 +18,7 @@ It also integrates with Strava, shows cafes along the way via Google Places, and
 
 ## Why it exists
 
-Weather is a huge factor in cycling, particularly the wind. Having a nice tailwind on the way home makes a huge difference to the enjoyment of a ride. I've watched and listened to local riders planning routes and it starts with the wind direction and looking at a big list of potential routes, I thought I could make that easier.
+Weather is a huge factor in cycling, particularly the wind. Having a nice tailwind on the way home makes a big difference to the enjoyment of a ride. I've watched and listened to local riders planning routes and it starts with the wind direction and looking at a big list of potential routes, I thought I could make that easier.
 
 Built as a personal project for me and other friends, then extended for my local cycling club.
 
@@ -90,10 +90,15 @@ src/
   constants.ts   - Thresholds, API config, algorithm parameters
 ```
 
+## Possible extensions
+
+- **Multi-club / multi-location** - Currently built around Leighton Buzzard. The core logic is location-agnostic, it just needs a set of routes in a local area as seed data.
+- **Personal Strava library** - Deeper Strava integration to analyse a rider's own saved routes, not just the curated set.
+
 ## Status
 
 Live and being used by LBRCC club members. Actively maintained.
 
 ---
 
-Built by [Aaron Cottrell](https://github.com/acottrell)
+Built by [Aaron Cottrell](https://acottrell.com)
