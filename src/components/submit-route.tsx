@@ -1,8 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { track } from "@vercel/analytics";
+
+const LOADING_MESSAGES = [
+  "Fetching route from Strava...",
+  "Analysing wind exposure...",
+  "Mapping segments...",
+];
 
 interface SubmitRouteProps {
   onBack: () => void;
@@ -14,7 +20,18 @@ export function SubmitRoute({ onBack }: SubmitRouteProps) {
   const [sourceName, setSourceName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
+  const [messageIndex, setMessageIndex] = useState(0);
+
+  useEffect(() => {
+    if (!loading) return;
+    setMessageIndex(0);
+    const interval = setInterval(() => {
+      setMessageIndex((i) =>
+        i < LOADING_MESSAGES.length - 1 ? i + 1 : i
+      );
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -36,12 +53,16 @@ export function SubmitRoute({ onBack }: SubmitRouteProps) {
         const data = await res.json();
 
         if (!res.ok) {
+          if (res.status === 409 && data.existingRouteId) {
+            window.location.href = `/route/${data.existingRouteId}`;
+            return;
+          }
           setError(data.error || "Submission failed");
           return;
         }
 
         track("submission_created");
-        setSubmitted(true);
+        window.location.href = `/route/${data.id}`;
       } catch {
         setError("Something went wrong");
       } finally {
@@ -51,22 +72,18 @@ export function SubmitRoute({ onBack }: SubmitRouteProps) {
     [stravaUrl, cafeStop, sourceName]
   );
 
-  if (submitted) {
+  if (loading) {
     return (
-      <div className="max-w-2xl mx-auto w-full px-4 py-6 space-y-6 text-center">
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold">Thanks for submitting!</h2>
-          <p className="text-sm text-muted-foreground">
-            We review routes manually to keep quality high. Yours should appear
-            in the recommendations within a couple of days.
+      <div className="max-w-2xl mx-auto w-full px-4 py-6">
+        <div className="flex flex-col items-center justify-center py-20 gap-4 animate-in fade-in duration-300">
+          <div className="h-5 w-5 rounded-full border-2 border-foreground/20 border-t-foreground animate-spin" />
+          <p
+            key={messageIndex}
+            className="text-sm text-muted-foreground animate-in fade-in duration-300"
+          >
+            {LOADING_MESSAGES[messageIndex]}
           </p>
         </div>
-        <button
-          onClick={onBack}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Back to today&apos;s rides
-        </button>
       </div>
     );
   }
@@ -76,11 +93,7 @@ export function SubmitRoute({ onBack }: SubmitRouteProps) {
       <div className="space-y-1">
         <h2 className="text-lg font-semibold">Submit a route</h2>
         <p className="text-sm text-muted-foreground">
-          Share a Strava route with the community. Your name or club will be
-          shown alongside this route on Tailwise.
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Don&apos;t have Strava? Ask a clubmate to share the route link with you.
+          Share a Strava route and get instant wind analysis.
         </p>
       </div>
 
@@ -117,7 +130,7 @@ export function SubmitRoute({ onBack }: SubmitRouteProps) {
 
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="source-name">
-            Your name or club (optional)
+            Name or club (optional)
           </label>
           <p className="text-xs text-muted-foreground">
             Shown publicly on Tailwise alongside this route
@@ -140,7 +153,7 @@ export function SubmitRoute({ onBack }: SubmitRouteProps) {
         )}
 
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Submitting..." : "Submit route"}
+          Submit route
         </Button>
       </form>
 

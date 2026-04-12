@@ -69,6 +69,14 @@ export default function RoutePage() {
 
           {detail && (
             <>
+              {detail.route.status === "pending" && (
+                <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/50">
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500 shrink-0" />
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Unlisted — share this page with anyone using the link
+                  </p>
+                </div>
+              )}
               <div className="space-y-4">
                 <DirectionCard
                   recommendation={detail.recommendation}

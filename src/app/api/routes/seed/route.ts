@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import { insertRoute, routeExistsByStravaId } from "@/lib/db/queries";
+import { insertRoute, findRouteIdByStravaId } from "@/lib/db/queries";
 import { decodePolyline } from "@/lib/polyline";
 import { analyzeRoute } from "@/lib/route-analyzer";
 import { centroid } from "@/lib/geo-utils";
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       }
 
       const stravaRouteId = BigInt(routeId);
-      if (await routeExistsByStravaId(stravaRouteId)) {
+      if (await findRouteIdByStravaId(stravaRouteId)) {
         skipped++;
         continue;
       }

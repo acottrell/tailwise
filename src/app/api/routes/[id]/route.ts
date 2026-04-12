@@ -13,7 +13,7 @@ export async function GET(
   const { id } = await params;
 
   const row = await findRouteById(id);
-  if (!row || row.status !== "approved") {
+  if (!row) {
     return NextResponse.json({ error: "Route not found" }, { status: 404 });
   }
 
@@ -57,6 +57,7 @@ export async function GET(
       stravaRouteId: row.stravaRouteId ? row.stravaRouteId.toString() : null,
       coordinates: row.coordinates,
       polyline: row.polyline,
+      status: row.status,
     },
     weather,
     recommendation,
