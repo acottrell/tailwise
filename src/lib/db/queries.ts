@@ -38,15 +38,15 @@ export async function findRouteById(id: string): Promise<RouteRow | undefined> {
   return rows[0];
 }
 
-export async function routeExistsByStravaId(
+export async function findRouteIdByStravaId(
   stravaRouteId: bigint
-): Promise<boolean> {
+): Promise<string | null> {
   const rows = await db
     .select({ id: routes.id })
     .from(routes)
     .where(eq(routes.stravaRouteId, stravaRouteId))
     .limit(1);
-  return rows.length > 0;
+  return rows[0]?.id ?? null;
 }
 
 export async function insertRoute(

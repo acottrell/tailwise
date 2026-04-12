@@ -22,6 +22,7 @@ export interface RouteDetail {
     stravaRouteId: string | null;
     coordinates: Coordinate[];
     polyline: string;
+    status: "approved" | "pending";
   };
   weather: WeatherData;
   recommendation: Recommendation;

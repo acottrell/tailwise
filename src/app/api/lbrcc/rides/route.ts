@@ -6,7 +6,7 @@ import {
   deleteWeeklyRide,
   findRouteById,
   insertRoute,
-  routeExistsByStravaId,
+  findRouteIdByStravaId,
 } from "@/lib/db/queries";
 import { sanitizeOrReject, isValidStravaUrl } from "@/lib/sanitize";
 import { fetchStravaRoute, getServerAccessToken } from "@/lib/strava";
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     const stravaRouteId = BigInt(routeIdStr);
 
     // Check if this Strava route already exists
-    if (await routeExistsByStravaId(stravaRouteId)) {
+    if (await findRouteIdByStravaId(stravaRouteId)) {
       // Find and use the existing route
       // We need to look it up by strava ID — add a small helper query
       const { db } = await import("@/lib/db/index");

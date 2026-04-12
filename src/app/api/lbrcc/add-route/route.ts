@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import { insertRoute, routeExistsByStravaId } from "@/lib/db/queries";
+import { insertRoute, findRouteIdByStravaId } from "@/lib/db/queries";
 import { isValidStravaUrl } from "@/lib/sanitize";
 import { fetchStravaRoute, getServerAccessToken } from "@/lib/strava";
 import { decodePolyline } from "@/lib/polyline";
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
   const stravaRouteId = BigInt(routeIdStr);
 
   // Check if already in library
-  if (await routeExistsByStravaId(stravaRouteId)) {
+  if (await findRouteIdByStravaId(stravaRouteId)) {
     const { db } = await import("@/lib/db/index");
     const { routes } = await import("@/lib/db/schema");
     const { eq } = await import("drizzle-orm");

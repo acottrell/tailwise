@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import { insertRoute, routeExistsByStravaId } from "@/lib/db/queries";
+import { insertRoute, findRouteIdByStravaId } from "@/lib/db/queries";
 import { decodePolyline } from "@/lib/polyline";
 import { analyzeRoute } from "@/lib/route-analyzer";
 import { centroid } from "@/lib/geo-utils";
@@ -84,9 +84,10 @@ export async function POST(request: NextRequest) {
   }
 
   const stravaRouteId = BigInt(routeIdStr);
-  if (await routeExistsByStravaId(stravaRouteId)) {
+  const existingId = await findRouteIdByStravaId(stravaRouteId);
+  if (existingId) {
     return NextResponse.json(
-      { error: "This route has already been submitted" },
+      { error: "This route has already been submitted", existingRouteId: existingId },
       { status: 409 }
     );
   }
@@ -105,8 +106,9 @@ export async function POST(request: NextRequest) {
     const analyzed = analyzeRoute(coordinates, strava.name);
     const center = centroid(analyzed.coordinates);
 
+    const id = nanoid();
     await insertRoute({
-      id: nanoid(),
+      id,
       stravaRouteId,
       name: strava.name,
       destination: null,
@@ -130,12 +132,12 @@ export async function POST(request: NextRequest) {
     });
 
     // Send email notification
-    await sendNotification(strava.name, stravaUrl, cleanSource).catch(
+    await sendNotification(strava.name, stravaUrl, cleanSource, id).catch(
       () => {} // Don't fail the submission if email fails
     );
 
     return NextResponse.json(
-      { message: "Route submitted for review" },
+      { message: "Route submitted for review", id },
       { status: 201 }
     );
   } catch (e) {
@@ -153,7 +155,8 @@ export async function POST(request: NextRequest) {
 async function sendNotification(
   routeName: string,
   stravaUrl: string,
-  submitter: string | null
+  submitter: string | null,
+  routeId: string
 ) {
   const apiKey = process.env.RESEND_API_KEY;
   const adminEmail = process.env.ADMIN_EMAIL;
@@ -176,6 +179,7 @@ async function sendNotification(
         <ul>
           <li><strong>Route:</strong> ${routeName}</li>
           <li><strong>Strava:</strong> <a href="${stravaUrl}">${stravaUrl}</a></li>
+          <li><strong>Preview:</strong> <a href="${appUrl}/route/${routeId}">${routeName} on Tailwise</a></li>
           ${submitter ? `<li><strong>Submitted by:</strong> ${submitter}</li>` : ""}
         </ul>
         <p><a href="${appUrl}/admin">Review in admin</a></p>
