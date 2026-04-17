@@ -55,7 +55,7 @@ function getTimeLabel(departure: Date): { title: string; timeWord: string } {
 
 function getWindSummary(windDeg: number, windMph: number, timeWord: string): string {
   const dir = compassDirection(windDeg);
-  if (windMph < 5) return `Light winds ${timeWord}, ride any direction`;
+  if (windMph < 8) return `Light winds ${timeWord}, ride any direction`;
   const opposite: Record<string, string> = {
     N: "south", NE: "southwest", E: "west", SE: "northwest",
     S: "north", SW: "northeast", W: "east", NW: "southeast",
