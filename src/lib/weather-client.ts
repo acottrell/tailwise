@@ -76,3 +76,28 @@ export function getWeatherForWindow(
 export function estimateRideDuration(distanceKm: number): number {
   return distanceKm / ASSUMED_SPEED_KMH;
 }
+
+export function getWeatherSnapshot(
+  hourly: HourlyWeather[],
+  at: Date
+): WeatherData | null {
+  if (hourly.length === 0) return null;
+
+  const targetDate = at.toISOString().split("T")[0];
+  const targetHour = at.getHours();
+
+  const exact = hourly.find((h) => {
+    const [d, t] = h.time.split("T");
+    return d === targetDate && parseInt(t.split(":")[0]) === targetHour;
+  });
+
+  const hour = exact ?? hourly[0];
+  return {
+    windSpeedMph: Math.round(hour.windSpeedMph * 10) / 10,
+    windDirectionDeg: Math.round(hour.windDirectionDeg),
+    precipitationProbability: hour.precipitationProbability,
+    temperatureCelsius: Math.round(hour.temperatureCelsius * 10) / 10,
+    hourly,
+    sunTimes: [],
+  };
+}

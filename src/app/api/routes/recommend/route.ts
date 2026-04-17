@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { findApprovedRoutes, dbRowToParsedRoute } from "@/lib/db/queries";
 import { fetchWeatherServer } from "@/lib/weather-server";
-import { getWeatherForWindow, estimateRideDuration } from "@/lib/weather-client";
+import { getWeatherForWindow, getWeatherSnapshot, estimateRideDuration } from "@/lib/weather-client";
 import { getRecommendation } from "@/lib/wind-advisor";
+import { CLUB_HOME_LAT, CLUB_HOME_LNG } from "@/constants";
 
 interface HourlyEntry {
   time: string;
@@ -124,15 +125,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ weather: null, recommendations: [] });
   }
 
-  // Single weather call — all routes are in the same area
-  const firstRoute = allRoutes[0];
+  // Single weather call at fixed club-home centroid so the banner
+  // doesn't shift when the distance filter changes.
   const daysAhead = Math.max(
     2,
     Math.ceil((departure.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) + 1
   );
   const { hourly, sunTimes } = await fetchWeatherServer(
-    firstRoute.centroidLat,
-    firstRoute.centroidLng,
+    CLUB_HOME_LAT,
+    CLUB_HOME_LNG,
     Math.min(daysAhead, 16)
   );
 
@@ -188,8 +189,9 @@ export async function GET(request: NextRequest) {
     ranked = scored;
   }
 
-  // Use weather from first route (representative for the area)
-  const representativeWeather = ranked[0]?.weather;
+  // Header weather is a snapshot at the departure hour so it stays
+  // stable across filters. Per-route scoring keeps the ride-window average.
+  const headerWeather = getWeatherSnapshot(hourly, departure);
 
   const recommendations = ranked.map(({ row, recommendation }) => ({
     id: row.id,
@@ -213,13 +215,12 @@ export async function GET(request: NextRequest) {
   const ridingInsight = getRidingInsight(hourly, departure);
 
   return NextResponse.json({
-    weather: representativeWeather
+    weather: headerWeather
       ? {
-          windSpeedMph: representativeWeather.windSpeedMph,
-          windDirectionDeg: representativeWeather.windDirectionDeg,
-          precipitationProbability:
-            representativeWeather.precipitationProbability,
-          temperatureCelsius: representativeWeather.temperatureCelsius,
+          windSpeedMph: headerWeather.windSpeedMph,
+          windDirectionDeg: headerWeather.windDirectionDeg,
+          precipitationProbability: headerWeather.precipitationProbability,
+          temperatureCelsius: headerWeather.temperatureCelsius,
         }
       : null,
     ridingInsight,

@@ -74,7 +74,7 @@ export function getNamedRides(now: Date = new Date()): NamedRide[] {
   if (calendarDaysBetween(now, sunday) <= HORIZON_DAYS) {
     rides.push({
       key: "sunday-830",
-      label: "Sunday ride · 8:30am",
+      label: "Sunday 8:30am",
       shortLabel: "Sun 8:30am",
       time: sunday,
       dayOfWeek: 0,
@@ -93,7 +93,7 @@ export function getNamedRides(now: Date = new Date()): NamedRide[] {
       const timeStr = format12h(fTime.hours, fTime.minutes);
       rides.push({
         key: `frisky-${fTime.hours}${fTime.minutes}`,
-        label: `Frisky · Wed ${timeStr}`,
+        label: `Frisky Wed ${timeStr}`,
         shortLabel: `Frisky ${timeStr}`,
         time: frisky,
         dayOfWeek: 3,
