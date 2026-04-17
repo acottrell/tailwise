@@ -22,7 +22,7 @@ const FILTERS: { key: DistanceFilter; label: string; range?: string }[] = [
   { key: "short", label: "Short", range: "Under 30mi" },
   { key: "medium", label: "Medium", range: "30–50mi" },
   { key: "long", label: "Long", range: "50–80mi" },
-  { key: "long+", label: "Long+", range: "80mi+" },
+  { key: "long+", label: "Epic", range: "80mi+" },
 ];
 
 function formatTime(date: Date): string {
@@ -56,13 +56,8 @@ function getTimeLabel(departure: Date): { title: string; timeWord: string } {
 function getWindSummary(windDeg: number, windMph: number, timeWord: string): string {
   const dir = compassDirection(windDeg);
   if (windMph < 8) return `Light winds ${timeWord}, ride any direction`;
-  const fullName: Record<string, string> = {
-    N: "north", NE: "northeast", E: "east", SE: "southeast",
-    S: "south", SW: "southwest", W: "west", NW: "northwest",
-  };
-  const headOut = fullName[dir] || dir.toLowerCase();
-  if (windMph >= 15) return `Strong wind ${timeWord}, head out ${headOut} for a tailwind home`;
-  return `Head out ${headOut} ${timeWord} for a tailwind home`;
+  if (windMph >= 15) return `Strong ${dir} wind ${timeWord} — head into it for a tailwind home`;
+  return `Head out ${dir} ${timeWord} for a tailwind home`;
 }
 
 export function RecommendFeed({
@@ -233,11 +228,10 @@ export function RecommendFeed({
         <div className="flex items-center justify-between">
           {weather ? (
             <div className="flex items-center gap-2.5">
-              <WindCompass windDirectionDeg={weather.windDirectionDeg} size={28} />
+              <WindCompass windDirectionDeg={weather.windDirectionDeg} size={40} />
               <div className="flex flex-col">
                 <span className="text-sm font-semibold">
                   Wind {compassDirection(weather.windDirectionDeg)} {Math.round(weather.windSpeedMph)} mph
-                  <span className="font-normal text-muted-foreground"> ({Math.round(weather.windSpeedMph * 1.60934)} km/h)</span>
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {Math.round(weather.temperatureCelsius)}°C · {weather.precipitationProbability}% rain

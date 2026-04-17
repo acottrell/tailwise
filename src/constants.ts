@@ -11,6 +11,9 @@ export const CONFIDENCE_STRONG_THRESHOLD_MPH = 5;
 
 export const OPEN_METEO_BASE_URL = "https://api.open-meteo.com/v1/forecast";
 
+export const CLUB_HOME_LAT = 51.9158;
+export const CLUB_HOME_LNG = -0.6594;
+
 export const STRAVA_AUTH_URL = "https://www.strava.com/oauth/authorize";
 export const STRAVA_TOKEN_URL = "https://www.strava.com/oauth/token";
 export const STRAVA_API_BASE = "https://www.strava.com/api/v3";
