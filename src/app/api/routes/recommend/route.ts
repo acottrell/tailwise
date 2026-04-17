@@ -19,6 +19,7 @@ function getRidingInsight(hourly: HourlyEntry[], departure: Date): string | null
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
   const isTomorrow = departure.toDateString() === tomorrow.toDateString();
+  const weekday = departure.toLocaleDateString("en-GB", { weekday: "long" });
 
   // Get daylight hours (6am-8pm) for the departure day
   const dayStart = new Date(departure);
@@ -52,7 +53,7 @@ function getRidingInsight(hourly: HourlyEntry[], departure: Date): string | null
   }
 
   const calmestHour = new Date(dayHours[calmestStart].time).getHours();
-  const dayLabel = isToday ? "today" : isTomorrow ? "tomorrow" : "";
+  const dayLabel = isToday ? "today" : isTomorrow ? "tomorrow" : `on ${weekday}`;
 
   // Check for rain
   const highRainHours = dayHours.filter((h) => h.precipitationProbability > 60);
