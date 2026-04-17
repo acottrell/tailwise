@@ -56,13 +56,13 @@ function getTimeLabel(departure: Date): { title: string; timeWord: string } {
 function getWindSummary(windDeg: number, windMph: number, timeWord: string): string {
   const dir = compassDirection(windDeg);
   if (windMph < 8) return `Light winds ${timeWord}, ride any direction`;
-  const opposite: Record<string, string> = {
-    N: "south", NE: "southwest", E: "west", SE: "northwest",
-    S: "north", SW: "northeast", W: "east", NW: "southeast",
+  const fullName: Record<string, string> = {
+    N: "north", NE: "northeast", E: "east", SE: "southeast",
+    S: "south", SW: "southwest", W: "west", NW: "northwest",
   };
-  const best = opposite[dir] || "downwind";
-  if (windMph >= 15) return `Strong wind ${timeWord}, consider riding ${best}`;
-  return `Consider riding ${best} ${timeWord}`;
+  const headOut = fullName[dir] || dir.toLowerCase();
+  if (windMph >= 15) return `Strong wind ${timeWord}, head out ${headOut} for a tailwind home`;
+  return `Head out ${headOut} ${timeWord} for a tailwind home`;
 }
 
 export function RecommendFeed({
