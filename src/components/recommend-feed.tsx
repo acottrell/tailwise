@@ -6,6 +6,7 @@ import { track } from "@vercel/analytics";
 import { RouteCard } from "@/components/route-card";
 import { WindCompass } from "@/components/wind-compass";
 import { compassDirection } from "@/lib/geo-utils";
+import { getNamedRides } from "@/lib/named-rides";
 
 type DistanceFilter = "all" | "short" | "medium" | "long" | "long+";
 
@@ -38,9 +39,18 @@ function getGreeting(): string {
   return "Evening";
 }
 
-function getTimeLabel(departureKey: string): { title: string; timeWord: string } {
-  if (departureKey === "now") return { title: "Today\u2019s best rides", timeWord: "today" };
-  return { title: "Tomorrow\u2019s best rides", timeWord: "tomorrow" };
+function calendarDaysBetween(from: Date, to: Date): number {
+  const f = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  const t = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+  return Math.round((t.getTime() - f.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function getTimeLabel(departure: Date): { title: string; timeWord: string } {
+  const days = calendarDaysBetween(new Date(), departure);
+  if (days <= 0) return { title: "Today\u2019s best rides", timeWord: "today" };
+  if (days === 1) return { title: "Tomorrow\u2019s best rides", timeWord: "tomorrow" };
+  const weekday = departure.toLocaleDateString("en-GB", { weekday: "long" });
+  return { title: `${weekday}\u2019s best rides`, timeWord: `on ${weekday}` };
 }
 
 function getWindSummary(windDeg: number, windMph: number, timeWord: string): string {
@@ -90,13 +100,30 @@ export function RecommendFeed({
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    return [
+    const named = getNamedRides(now);
+    const tomorrowDay = tomorrow.getDay();
+    const skipGeneric = new Set<string>();
+    for (const ride of named) {
+      if (ride.dayOfWeek !== tomorrowDay) continue;
+      const h = ride.time.getHours();
+      const m = ride.time.getMinutes();
+      if (h === 8 && m === 30) skipGeneric.add("830");
+      if (h === 12 && m === 0) skipGeneric.add("midday");
+      if (h === 18 && m === 0) skipGeneric.add("6pm");
+    }
+
+    type Opt = { key: string; label: string; shortLabel: string; getTime: () => Date };
+
+    const opts: Opt[] = [
       {
         key: "now",
         label: mounted ? `Now (${formatTime(now)})` : "Now",
         shortLabel: "Now",
         getTime: () => new Date(),
       },
+    ];
+
+    const tomorrowGeneric: Opt[] = [
       {
         key: "830",
         label: "Tomorrow 8:30am",
@@ -128,6 +155,23 @@ export function RecommendFeed({
         },
       },
     ];
+
+    for (const opt of tomorrowGeneric) {
+      if (!skipGeneric.has(opt.key)) opts.push(opt);
+    }
+
+    for (const ride of named) {
+      const time = ride.time;
+      opts.push({
+        key: ride.key,
+        label: ride.label,
+        shortLabel: ride.shortLabel,
+        getTime: () => new Date(time),
+      });
+    }
+
+    opts.sort((a, b) => a.getTime().getTime() - b.getTime().getTime());
+    return opts;
   }, [mounted]);
 
   const loadRecommendations = useCallback(
@@ -174,7 +218,7 @@ export function RecommendFeed({
     [onSelectRoute, currentDeparture]
   );
 
-  const { title: timeTitle, timeWord } = getTimeLabel(departureKey);
+  const { title: timeTitle, timeWord } = getTimeLabel(currentDeparture ?? new Date());
 
   return (
     <div className="max-w-2xl mx-auto w-full px-4 py-6 space-y-4">
