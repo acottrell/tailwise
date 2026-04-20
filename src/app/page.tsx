@@ -193,14 +193,14 @@ export default function Home() {
         showBack={view.type !== "feed"}
       />
       <main className="flex-1 flex flex-col">
-        {view.type === "feed" && (
+        <div className={view.type !== "feed" ? "hidden" : ""}>
           <RecommendFeed
             onSelectRoute={handleSelectRoute}
             onCheckSpecific={handleCheckSpecific}
             onSubmitRoute={handleSubmitRoute}
             athleteName={athlete?.firstName}
           />
-        )}
+        </div>
 
         {view.type === "route-detail" && (
           <div className="max-w-2xl mx-auto w-full px-4 py-6 space-y-4">
