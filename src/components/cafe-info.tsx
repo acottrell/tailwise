@@ -7,7 +7,7 @@ interface CafeInfoProps {
   routeName: string;
   cafeStop?: string | null;
   coordinates: Coordinate[];
-  cafePosition?: { distanceKm: number; percent: number } | null;
+  cafePosition?: { distanceKm: number; percent: number; reversed?: boolean } | null;
   totalDistanceKm: number;
 }
 
@@ -61,7 +61,7 @@ export function CafeInfo({
     ? (() => {
         const cafeMi = Math.round(cafePosition.distanceKm / 1.609344);
         const totalMi = Math.round(totalDistanceKm / 1.609344);
-        return `Mile ${cafeMi} of ${totalMi}`;
+        return `Mile ${cafeMi} of ${totalMi}${cafePosition.reversed ? " in reverse" : ""}`;
       })()
     : null;
 

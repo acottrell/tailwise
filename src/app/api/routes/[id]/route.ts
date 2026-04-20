@@ -45,20 +45,22 @@ export async function GET(
     shouldReverse
   );
 
-  let cafePosition: { distanceKm: number; percent: number } | null = null;
+  let cafePosition: { distanceKm: number; percent: number; reversed: boolean } | null = null;
   if (row.cafeLat != null && row.cafeLng != null) {
     const pos = cafePositionOnRoute(row.coordinates as Coordinate[], {
       lat: row.cafeLat,
       lng: row.cafeLng,
     });
     if (pos.offRouteMeters <= 1000) {
-      const flipCafe = shouldReverse && meaningfulAdvantage;
+      const isLoop = row.routeType === "loop";
+      const flipCafe = isLoop && shouldReverse && meaningfulAdvantage;
       const adjusted = flipCafe
         ? { distanceKm: row.distanceKm - pos.distanceKm, percent: 1 - pos.percent }
         : pos;
       cafePosition = {
         distanceKm: adjusted.distanceKm,
         percent: adjusted.percent,
+        reversed: flipCafe,
       };
     }
   }
