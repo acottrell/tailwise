@@ -164,30 +164,7 @@ export async function GET(request: NextRequest) {
     return b.score - a.score;
   });
 
-  const isAllFilter = !minDistanceKm && !maxDistanceKm;
-
-  let ranked: typeof scored;
-
-  if (isAllFilter) {
-    // "All" shows best from each of short/medium/long (excludes Long+)
-    const buckets: { min: number; max: number }[] = [
-      { min: 0, max: 50 },     // Short
-      { min: 50, max: 85 },    // Medium
-      { min: 85, max: 130 },   // Long
-    ];
-    const picks: typeof scored = [];
-    for (const bucket of buckets) {
-      const best = scored.find(
-        (s) => s.row.distanceKm >= bucket.min && s.row.distanceKm < bucket.max
-      );
-      if (best) picks.push(best);
-    }
-    ranked = picks.slice(0, limit ?? 3);
-  } else if (limit) {
-    ranked = scored.slice(0, limit);
-  } else {
-    ranked = scored;
-  }
+  const ranked = limit ? scored.slice(0, limit) : scored;
 
   // Header weather is a snapshot at the departure hour so it stays
   // stable across filters. Per-route scoring keeps the ride-window average.

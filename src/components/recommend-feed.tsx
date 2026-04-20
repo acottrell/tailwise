@@ -25,6 +25,14 @@ const FILTERS: { key: DistanceFilter; label: string; range?: string }[] = [
   { key: "long+", label: "Epic", range: "80mi+" },
 ];
 
+const DISTANCE_KM: Record<DistanceFilter, { min?: number; max?: number }> = {
+  all: {},
+  short: { max: 50 },
+  medium: { min: 50, max: 85 },
+  long: { min: 85, max: 130 },
+  "long+": { min: 130 },
+};
+
 function formatTime(date: Date): string {
   return date.toLocaleTimeString("en-GB", {
     hour: "2-digit",
@@ -72,7 +80,9 @@ export function RecommendFeed({
   const [visibleCount, setVisibleCount] = useState(3);
   const [mounted, setMounted] = useState(false);
   const [showDepartureMenu, setShowDepartureMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const departureRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -169,33 +179,50 @@ export function RecommendFeed({
     return opts;
   }, [mounted]);
 
-  const loadRecommendations = useCallback(
-    (dist: DistanceFilter, depKey: string) => {
+  const loadForDeparture = useCallback(
+    (depKey: string) => {
+      setVisibleCount(3);
       const opt = departureOptions.find((o) => o.key === depKey);
       const time = opt?.getTime();
-      recommend(dist, time)
-        .then(() => track("recommend_loaded", { distance: dist, departure: depKey }))
+      recommend("all", time)
+        .then(() => track("recommend_loaded", { departure: depKey }))
         .catch(() => {});
     },
     [recommend, departureOptions]
   );
 
-  // Load on mount
+  // Reset to top 3 when tab becomes visible after being backgrounded
   useEffect(() => {
-    loadRecommendations(distance, departureKey);
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        setVisibleCount(3);
+        setSearchQuery("");
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
+
+  // Load all routes on mount
+  useEffect(() => {
+    loadForDeparture(departureKey);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDistanceChange = (d: DistanceFilter) => {
     setDistance(d);
     setVisibleCount(3);
-    loadRecommendations(d, departureKey);
   };
 
   const handleDepartureChange = (key: string) => {
     setDepartureKey(key);
     setShowDepartureMenu(false);
     setVisibleCount(3);
-    loadRecommendations(distance, key);
+    loadForDeparture(key);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setVisibleCount(10);
   };
 
   const weather = result?.weather;
@@ -212,6 +239,34 @@ export function RecommendFeed({
     },
     [onSelectRoute, currentDeparture]
   );
+
+  const filteredRecommendations = useMemo(() => {
+    if (!result) return [];
+    let routes = result.recommendations;
+
+    // Apply distance filter
+    if (distance !== "all") {
+      const range = DISTANCE_KM[distance];
+      routes = routes.filter((r) => {
+        if (range.min && r.distanceKm < range.min) return false;
+        if (range.max && r.distanceKm > range.max) return false;
+        return true;
+      });
+    }
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      routes = routes.filter((r) => {
+        const name = r.name.toLowerCase();
+        const cafe = (r.cafeStop ?? "").toLowerCase();
+        const dest = (r.destination ?? "").toLowerCase();
+        return name.includes(q) || cafe.includes(q) || dest.includes(q);
+      });
+    }
+
+    return routes;
+  }, [result, distance, searchQuery]);
 
   const { title: timeTitle, timeWord } = getTimeLabel(currentDeparture ?? new Date());
 
@@ -281,7 +336,7 @@ export function RecommendFeed({
           </p>
         )}
 
-        {/* Distance filter pills — own row, full width */}
+        {/* Distance filter pills */}
         <div className="flex gap-1.5">
           {FILTERS.map((f) => (
             <button
@@ -303,6 +358,54 @@ export function RecommendFeed({
             {FILTERS.find((f) => f.key === distance)?.range}
           </p>
         )}
+
+        {/* Search */}
+        <div className="relative">
+          <svg
+            viewBox="0 0 24 24"
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            ref={searchRef}
+            type="text"
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Or search by café or destination"
+            className="w-full h-11 pl-9 pr-9 rounded-lg border border-border bg-card text-base text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setVisibleCount(3);
+                searchRef.current?.blur();
+              }}
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 flex items-center justify-center rounded-full hover:bg-accent transition-colors"
+              aria-label="Clear search"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4 text-muted-foreground"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Route cards */}
@@ -342,17 +445,37 @@ export function RecommendFeed({
         </div>
       )}
 
-      {result && result.recommendations.length === 0 && (
-        <div className="rounded-lg border border-border bg-card p-4 text-center">
+      {result && filteredRecommendations.length === 0 && (
+        <div className="rounded-lg border border-border bg-card p-4 text-center space-y-2">
           <p className="text-sm text-muted-foreground">
-            No routes found for this distance range.
+            {searchQuery.trim() && distance !== "all"
+              ? `No routes matching "${searchQuery.trim()}" ${FILTERS.find((f) => f.key === distance)?.range?.toLowerCase() ?? ""}`
+              : searchQuery.trim()
+                ? `No routes matching "${searchQuery.trim()}"`
+                : "No routes found for this distance range."}
           </p>
+          {searchQuery.trim() && distance !== "all" && (
+            <button
+              onClick={() => handleDistanceChange("all")}
+              className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
+            >
+              Try all distances
+            </button>
+          )}
         </div>
       )}
 
-      {result && result.recommendations.length > 0 && (
+      {result && filteredRecommendations.length > 0 && (
         <div className={`space-y-3 ${loading ? "opacity-50" : ""}`}>
-          {result.recommendations.slice(0, visibleCount).map((route, i) => (
+          {searchQuery.trim() && (
+            <p className="text-xs text-muted-foreground">
+              {filteredRecommendations.length} {filteredRecommendations.length === 1 ? "route" : "routes"}
+            </p>
+          )}
+          {(searchQuery.trim()
+            ? filteredRecommendations
+            : filteredRecommendations.slice(0, visibleCount)
+          ).map((route, i) => (
             <RouteCard
               key={route.id}
               route={route}
@@ -360,12 +483,12 @@ export function RecommendFeed({
               onSelect={handleSelectRoute}
             />
           ))}
-          {result.recommendations.length > visibleCount && (
+          {!searchQuery.trim() && filteredRecommendations.length > visibleCount && (
             <button
               onClick={() => setVisibleCount((c) => c + 3)}
               className="w-full rounded-lg border border-border bg-card py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors min-h-[48px]"
             >
-              Show more {distance !== "all" ? `${FILTERS.find((f) => f.key === distance)?.label} ` : ""}rides
+              {filteredRecommendations.length - visibleCount} more rides
             </button>
           )}
         </div>
