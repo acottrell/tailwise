@@ -4,6 +4,7 @@ import { fetchWeatherServer } from "@/lib/weather-server";
 import { getWeatherForWindow, estimateRideDuration } from "@/lib/weather-client";
 import { getRecommendation } from "@/lib/wind-advisor";
 import { colorizeSegments } from "@/lib/segment-colorizer";
+import { cafePositionOnRoute } from "@/lib/geo-utils";
 import { Coordinate } from "@/lib/types";
 
 export async function GET(
@@ -43,12 +44,32 @@ export async function GET(
     shouldReverse
   );
 
+  let cafePosition: { distanceKm: number; percent: number } | null = null;
+  if (row.cafeLat != null && row.cafeLng != null) {
+    const pos = cafePositionOnRoute(row.coordinates as Coordinate[], {
+      lat: row.cafeLat,
+      lng: row.cafeLng,
+    });
+    if (pos.offRouteMeters <= 1000) {
+      // For reversed rides, flip the percentage so "mile 22 of 54" reflects
+      // what the rider will experience on the ride as they're told to take it.
+      const adjusted = shouldReverse
+        ? { distanceKm: row.distanceKm - pos.distanceKm, percent: 1 - pos.percent }
+        : pos;
+      cafePosition = {
+        distanceKm: adjusted.distanceKm,
+        percent: adjusted.percent,
+      };
+    }
+  }
+
   return NextResponse.json({
     route: {
       id: row.id,
       name: row.name,
       destination: row.destination,
       cafeStop: row.cafeStop,
+      cafePosition,
       distanceKm: row.distanceKm,
       elevationGainM: row.elevationGainM,
       routeType: row.routeType,

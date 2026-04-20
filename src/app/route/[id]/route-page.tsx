@@ -100,6 +100,8 @@ export default function RoutePage() {
                   routeName={detail.route.name}
                   cafeStop={detail.route.cafeStop}
                   coordinates={detail.route.coordinates}
+                  cafePosition={detail.route.cafePosition}
+                  totalDistanceKm={detail.route.distanceKm}
                 />
                 <RoadClosures coordinates={detail.route.coordinates} />
                 <ShareButton

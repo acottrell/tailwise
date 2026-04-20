@@ -256,6 +256,8 @@ export default function Home() {
                     routeName={detail.route.name}
                     cafeStop={detail.route.cafeStop}
                     coordinates={detail.route.coordinates}
+                    cafePosition={detail.route.cafePosition}
+                    totalDistanceKm={detail.route.distanceKm}
                   />
                   <RoadClosures coordinates={detail.route.coordinates} />
                   <ShareButton
@@ -294,6 +296,7 @@ export default function Home() {
                   <CafeInfo
                     routeName={stravaRoute.name}
                     coordinates={parsedRoute.coordinates}
+                    totalDistanceKm={stravaRoute.distance / 1000}
                   />
                   <RoadClosures coordinates={parsedRoute.coordinates} />
                 </div>
