@@ -37,6 +37,7 @@ export async function GET(
   const recommendation = getRecommendation(parsedRoute, weather);
 
   const shouldReverse = recommendation.direction === "reverse";
+  const meaningfulAdvantage = recommendation.tailwindAdvantage >= 1;
   const segmentColors = colorizeSegments(
     row.coordinates as Coordinate[],
     weather.windDirectionDeg,
@@ -51,9 +52,8 @@ export async function GET(
       lng: row.cafeLng,
     });
     if (pos.offRouteMeters <= 1000) {
-      // For reversed rides, flip the percentage so "mile 22 of 54" reflects
-      // what the rider will experience on the ride as they're told to take it.
-      const adjusted = shouldReverse
+      const flipCafe = shouldReverse && meaningfulAdvantage;
+      const adjusted = flipCafe
         ? { distanceKm: row.distanceKm - pos.distanceKm, percent: 1 - pos.percent }
         : pos;
       cafePosition = {
