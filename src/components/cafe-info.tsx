@@ -7,6 +7,8 @@ interface CafeInfoProps {
   routeName: string;
   cafeStop?: string | null;
   coordinates: Coordinate[];
+  cafePosition?: { distanceKm: number; percent: number } | null;
+  totalDistanceKm: number;
 }
 
 // Try to extract a cafe/pub name from route title
@@ -41,13 +43,27 @@ function getCentroid(coords: Coordinate[]) {
   return { lat: lat / coords.length, lng: lng / coords.length };
 }
 
-export function CafeInfo({ routeName, cafeStop, coordinates }: CafeInfoProps) {
+export function CafeInfo({
+  routeName,
+  cafeStop,
+  coordinates,
+  cafePosition,
+  totalDistanceKm,
+}: CafeInfoProps) {
   const cafeName = cafeStop || extractCafeName(routeName);
   if (!cafeName) return null;
 
   const centroid = getCentroid(coordinates);
   const searchQuery = encodeURIComponent(cafeName);
   const googleMapsUrl = `https://www.google.com/maps/search/${searchQuery}/@${centroid.lat},${centroid.lng},13z`;
+
+  const positionLabel = cafePosition
+    ? (() => {
+        const cafeMi = Math.round(cafePosition.distanceKm / 1.609344);
+        const totalMi = Math.round(totalDistanceKm / 1.609344);
+        return `Mile ${cafeMi} of ${totalMi}`;
+      })()
+    : null;
 
   return (
     <Card className="border-0 shadow-lg">
@@ -64,6 +80,11 @@ export function CafeInfo({ routeName, cafeStop, coordinates }: CafeInfoProps) {
             <div>
               <p className="text-xs text-muted-foreground">Suggested cafe stop</p>
               <p className="text-sm font-medium">{cafeName}</p>
+              {positionLabel && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {positionLabel}
+                </p>
+              )}
             </div>
           </div>
           <a

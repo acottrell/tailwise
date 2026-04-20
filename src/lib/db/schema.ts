@@ -16,6 +16,8 @@ export const routes = pgTable("routes", {
   name: text("name").notNull(),
   destination: text("destination"),
   cafeStop: text("cafe_stop"),
+  cafeLat: real("cafe_lat"),
+  cafeLng: real("cafe_lng"),
   distanceKm: real("distance_km").notNull(),
   elevationGainM: real("elevation_gain_m"),
   routeType: text("route_type").notNull(), // 'loop' | 'out-and-back' | 'point-to-point'

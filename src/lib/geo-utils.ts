@@ -134,6 +134,31 @@ export function getMidpointIndex(coords: Coordinate[], totalDist: number): numbe
   return Math.floor(coords.length / 2);
 }
 
+export function cafePositionOnRoute(
+  coords: Coordinate[],
+  cafe: Coordinate
+): { distanceKm: number; percent: number; offRouteMeters: number } {
+  let bestIdx = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < coords.length; i++) {
+    const d = haversineDistance(coords[i], cafe);
+    if (d < bestDist) {
+      bestDist = d;
+      bestIdx = i;
+    }
+  }
+  let acc = 0;
+  for (let i = 1; i <= bestIdx; i++) {
+    acc += haversineDistance(coords[i - 1], coords[i]);
+  }
+  const total = totalDistance(coords);
+  return {
+    distanceKm: acc,
+    percent: total > 0 ? acc / total : 0,
+    offRouteMeters: bestDist * 1000,
+  };
+}
+
 export function downsample(coords: Coordinate[], maxPoints: number): Coordinate[] {
   if (coords.length <= maxPoints) return coords;
   const step = (coords.length - 1) / (maxPoints - 1);
