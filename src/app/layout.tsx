@@ -42,6 +42,9 @@ export const metadata: Metadata = {
     siteName: "Tailwise",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({
