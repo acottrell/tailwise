@@ -45,24 +45,38 @@ export async function GET(
     shouldReverse
   );
 
+  const isLoop = row.routeType === "loop";
+  const flipCafe = isLoop && shouldReverse && meaningfulAdvantage;
+  const coords = row.coordinates as Coordinate[];
+  const totalKm = row.distanceKm;
+
+  function computeCafePosition(lat: number, lng: number) {
+    const pos = cafePositionOnRoute(coords, { lat, lng });
+    if (pos.offRouteMeters > 1000) return null;
+    const adjusted = flipCafe
+      ? { distanceKm: totalKm - pos.distanceKm, percent: 1 - pos.percent }
+      : pos;
+    return { distanceKm: adjusted.distanceKm, percent: adjusted.percent, reversed: flipCafe };
+  }
+
   let cafePosition: { distanceKm: number; percent: number; reversed: boolean } | null = null;
   if (row.cafeLat != null && row.cafeLng != null) {
-    const pos = cafePositionOnRoute(row.coordinates as Coordinate[], {
-      lat: row.cafeLat,
-      lng: row.cafeLng,
-    });
-    if (pos.offRouteMeters <= 1000) {
-      const isLoop = row.routeType === "loop";
-      const flipCafe = isLoop && shouldReverse && meaningfulAdvantage;
-      const adjusted = flipCafe
-        ? { distanceKm: row.distanceKm - pos.distanceKm, percent: 1 - pos.percent }
-        : pos;
-      cafePosition = {
-        distanceKm: adjusted.distanceKm,
-        percent: adjusted.percent,
-        reversed: flipCafe,
-      };
-    }
+    cafePosition = computeCafePosition(row.cafeLat, row.cafeLng);
+  }
+
+  type CafeStopInput = { name: string; lat: number; lng: number };
+  const rawStops = row.cafeStops as CafeStopInput[] | null;
+  let cafeStops: { name: string; position: { distanceKm: number; percent: number; reversed: boolean } }[] | null = null;
+
+  if (Array.isArray(rawStops) && rawStops.length > 0) {
+    cafeStops = rawStops
+      .map((c) => {
+        const pos = computeCafePosition(c.lat, c.lng);
+        return pos ? { name: c.name, position: pos } : null;
+      })
+      .filter((c): c is NonNullable<typeof c> => c !== null)
+      .sort((a, b) => a.position.distanceKm - b.position.distanceKm);
+    if (cafeStops.length === 0) cafeStops = null;
   }
 
   return NextResponse.json({
@@ -72,6 +86,7 @@ export async function GET(
       destination: row.destination,
       cafeStop: row.cafeStop,
       cafePosition,
+      cafeStops,
       distanceKm: row.distanceKm,
       elevationGainM: row.elevationGainM,
       routeType: row.routeType,
