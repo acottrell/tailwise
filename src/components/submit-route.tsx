@@ -122,7 +122,7 @@ export function SubmitRoute({ onBack }: SubmitRouteProps) {
             type="text"
             value={cafeStop}
             onChange={(e) => setCafeStop(e.target.value)}
-            placeholder="e.g. Norsk, Haddenham"
+            placeholder="e.g. Norsk"
             maxLength={100}
             className="w-full rounded-lg border border-border bg-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
           />
