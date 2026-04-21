@@ -115,15 +115,18 @@ export function SubmitRoute({ onBack }: SubmitRouteProps) {
 
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="cafe-stop">
-            Cafe stop (optional)
+            Cafe stops (optional)
           </label>
+          <p className="text-xs text-muted-foreground">
+            For longer routes, separate multiple stops with a comma
+          </p>
           <input
             id="cafe-stop"
             type="text"
             value={cafeStop}
             onChange={(e) => setCafeStop(e.target.value)}
-            placeholder="e.g. Norsk"
-            maxLength={100}
+            placeholder="e.g. Norsk, Church Farm Cafe"
+            maxLength={200}
             className="w-full rounded-lg border border-border bg-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
           />
         </div>
