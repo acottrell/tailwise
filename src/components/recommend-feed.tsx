@@ -278,7 +278,7 @@ export function RecommendFeed({
       </h2>
 
       {/* Sticky filter bar: weather + advice + filters + departure */}
-      <div className="sticky top-[57px] z-10 -mx-4 px-4 py-3 bg-background/95 backdrop-blur-sm border-b border-border/50 space-y-2.5">
+      <div className="sticky top-[57px] z-10 -mx-4 px-4 py-3 bg-background border-b border-border/50 space-y-2.5">
         {/* Weather + departure row */}
         <div className="flex items-center justify-between">
           {weather ? (
