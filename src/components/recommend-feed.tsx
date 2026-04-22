@@ -5,6 +5,7 @@ import { useRecommend } from "@/hooks/use-recommend";
 import { track } from "@vercel/analytics";
 import { RouteCard } from "@/components/route-card";
 import { WindCompass } from "@/components/wind-compass";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { compassDirection } from "@/lib/geo-utils";
 import { getNamedRides } from "@/lib/named-rides";
 
@@ -272,13 +273,31 @@ export function RecommendFeed({
 
   return (
     <div className="max-w-2xl mx-auto w-full px-4 py-6 space-y-4">
-      {/* Title */}
+      {/* Masthead — scrolls away naturally */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <svg viewBox="0 0 36 28" className="h-7 w-auto" fill="none">
+            <circle cx="12" cy="21" r="5.5" stroke="currentColor" strokeWidth="1.4" />
+            <circle cx="25" cy="21" r="5.5" stroke="currentColor" strokeWidth="1.4" />
+            <path d="M12 21l5-9 5 9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M17 12l5-2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            <circle cx="17" cy="10" r="1.8" fill="currentColor" />
+            <path d="M26 9h7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.5" />
+            <path d="M28 12h6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.35" />
+            <path d="M27 15h5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.2" />
+          </svg>
+          <span className="font-semibold text-lg tracking-tight">Tailwise</span>
+        </div>
+        <ThemeToggle />
+      </div>
+
+      {/* Greeting */}
       <h2 className="text-xl font-heading font-bold tracking-tight">
         {athleteName ? `${getGreeting()}, ${athleteName}` : timeTitle}
       </h2>
 
       {/* Sticky filter bar: weather + advice + filters + departure */}
-      <div className="sticky top-[57px] z-10 -mx-4 px-4 py-3 bg-background border-b border-border/50 space-y-2.5">
+      <div className="sticky top-0 z-10 -mx-4 px-4 py-3 bg-background border-b border-border/50 space-y-2.5">
         {/* Weather + departure row */}
         <div className="flex items-center justify-between">
           {weather ? (

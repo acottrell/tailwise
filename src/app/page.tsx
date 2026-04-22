@@ -186,12 +186,14 @@ export default function Home() {
   return (
     <div className="min-h-full flex flex-col">
       <WindTransition active={transitioning} />
-      <Header
-        athleteName={athlete?.firstName}
-        onDisconnect={disconnect}
-        onHome={handleHome}
-        showBack={view.type !== "feed"}
-      />
+      {view.type !== "feed" && (
+        <Header
+          athleteName={athlete?.firstName}
+          onDisconnect={disconnect}
+          onHome={handleHome}
+          showBack
+        />
+      )}
       <main className="flex-1 flex flex-col">
         <div className={view.type !== "feed" ? "hidden" : ""}>
           <RecommendFeed
