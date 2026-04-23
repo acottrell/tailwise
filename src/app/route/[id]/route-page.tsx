@@ -85,6 +85,11 @@ export default function RoutePage() {
                   stravaRouteId={detail.route.stravaRouteId}
                   windDirectionDeg={detail.weather.windDirectionDeg}
                 />
+                {detail.recommendation.direction === "reverse" && detail.recommendation.tailwindAdvantage >= 1 && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Showing wind for the recommended direction
+                  </p>
+                )}
                 <RouteMap
                   coordinates={detail.route.coordinates}
                   segmentColors={detail.segmentColors}
