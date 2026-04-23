@@ -1,6 +1,7 @@
 import { ParsedRoute, WeatherData, Recommendation } from "./types";
 import { tailwindComponent, bearing } from "./geo-utils";
 import {
+  DIRECTION_MEANINGFUL_THRESHOLD_MPH,
   CONFIDENCE_LOW_THRESHOLD_MPH,
   CONFIDENCE_STRONG_THRESHOLD_MPH,
 } from "@/constants";
@@ -36,11 +37,12 @@ export function getRecommendation(
     homewardBearingReversed
   );
 
-  const advantage = Math.abs(tailwindNatural - tailwindReversed);
+  const rawAdvantage = Math.abs(tailwindNatural - tailwindReversed);
+  const meaningful = rawAdvantage >= DIRECTION_MEANINGFUL_THRESHOLD_MPH;
 
-  // Determine which direction gives better tailwind coming home
   const naturalIsBetter = tailwindNatural > tailwindReversed;
-  const direction: "as-planned" | "reverse" = naturalIsBetter ? "as-planned" : "reverse";
+  const direction: "as-planned" | "reverse" = meaningful && !naturalIsBetter ? "reverse" : "as-planned";
+  const advantage = meaningful ? rawAdvantage : 0;
 
   const homewardTailwind = Math.max(tailwindNatural, tailwindReversed);
 
