@@ -76,7 +76,7 @@ export function DirectionCard({
             Ride either way
           </h2>
           <p className="text-muted-foreground text-sm" {...fadeSlide(200)}>
-            No meaningful wind advantage either direction
+            No wind advantage either direction
           </p>
           {stravaRouteId && <StravaButton stravaRouteId={stravaRouteId} delay={300} />}
         </CardContent>

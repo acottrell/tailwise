@@ -106,6 +106,13 @@ export async function POST(request: NextRequest) {
     const analyzed = analyzeRoute(coordinates, strava.name);
     const center = centroid(analyzed.coordinates);
 
+    const cafeNames = cleanCafe
+      ? cleanCafe.split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
+    const cafeStopsJson = cafeNames.length > 1
+      ? cafeNames.map((name) => ({ name }))
+      : null;
+
     const id = nanoid();
     await insertRoute({
       id,
@@ -113,6 +120,7 @@ export async function POST(request: NextRequest) {
       name: strava.name,
       destination: null,
       cafeStop: cleanCafe,
+      cafeStops: cafeStopsJson,
       distanceKm: strava.distance / 1000,
       elevationGainM: strava.elevationGain,
       routeType: analyzed.routeType,
