@@ -259,6 +259,7 @@ export default function Home() {
                     cafeStop={detail.route.cafeStop}
                     coordinates={detail.route.coordinates}
                     cafePosition={detail.route.cafePosition}
+                    cafeStops={detail.route.cafeStops}
                     totalDistanceKm={detail.route.distanceKm}
                   />
                   <RoadClosures coordinates={detail.route.coordinates} />
