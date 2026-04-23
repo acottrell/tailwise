@@ -36,7 +36,6 @@ export function DirectionCard({
 
   const isReverse = direction === "reverse";
   const directionLabel = isReverse ? "Ride in reverse" : "Ride as planned";
-  const directionHint = isReverse ? "Start this loop the other way round for a tailwind home" : null;
 
   // Determine if we should show the hero treatment
   const showHero = !isNonLoop && !isLowWind && tailwindAdvantage >= 2;
@@ -96,20 +95,15 @@ export function DirectionCard({
             </p>
           )}
 
-          <div {...fadeSlide(100)}>
-            <h2 className="text-3xl sm:text-4xl font-heading font-extrabold tracking-tight">
-              {directionLabel}
-            </h2>
-            {directionHint && (
-              <p className="text-sm text-muted-foreground mt-1">{directionHint}</p>
-            )}
-          </div>
+          <h2 className="text-3xl sm:text-4xl font-heading font-extrabold tracking-tight" {...fadeSlide(100)}>
+            {directionLabel}
+          </h2>
 
           <div {...fadeSlide(200)}>
             <span className="text-6xl font-heading font-extrabold tabular-nums text-wind">
               {tailwindAdvantage}
             </span>
-            <p className="text-sm text-muted-foreground mt-1">mph tailwind</p>
+            <p className="text-sm text-muted-foreground mt-1">mph tailwind advantage</p>
           </div>
 
           {windDirectionDeg != null && (
@@ -118,11 +112,7 @@ export function DirectionCard({
             </div>
           )}
 
-          <p className="text-sm text-muted-foreground max-w-xs mx-auto" {...fadeSlide(300)}>
-            {message}
-          </p>
-
-          {stravaRouteId && <StravaButton stravaRouteId={stravaRouteId} delay={400} />}
+          {stravaRouteId && <StravaButton stravaRouteId={stravaRouteId} delay={300} />}
         </CardContent>
       </Card>
     );
@@ -138,17 +128,12 @@ export function DirectionCard({
           </p>
         )}
 
-        <div {...fadeSlide(100)}>
-          <h2 className="text-2xl sm:text-3xl font-heading font-bold tracking-tight">
-            {directionLabel}
-          </h2>
-          {directionHint && (
-            <p className="text-sm text-muted-foreground mt-1">{directionHint}</p>
-          )}
-        </div>
+        <h2 className="text-2xl sm:text-3xl font-heading font-bold tracking-tight" {...fadeSlide(100)}>
+          {directionLabel}
+        </h2>
 
         <p className="text-muted-foreground text-sm" {...fadeSlide(200)}>
-          Slight edge, <span className="font-semibold text-wind">{tailwindAdvantage} mph</span> tailwind
+          <span className="font-semibold text-wind">{tailwindAdvantage} mph</span> tailwind advantage
         </p>
 
         {windDirectionDeg != null && (
