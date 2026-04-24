@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useState, useMemo } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Header } from "@/components/header";
@@ -31,10 +31,29 @@ export default function RoutePage() {
 
   const { loading, error, detail, load } = useRouteDetail();
 
+  const departureTime = useMemo(
+    () => (departParam ? new Date(departParam) : undefined),
+    [departParam]
+  );
+
   useEffect(() => {
-    const departureTime = departParam ? new Date(departParam) : undefined;
     load(routeId, departureTime).catch(() => {});
-  }, [routeId, departParam, load]);
+  }, [routeId, departureTime, load]);
+
+  const conditionsLabel = useMemo(() => {
+    const dep = departureTime ?? new Date();
+    const now = new Date();
+    if (dep.toDateString() === now.toDateString()) return "Conditions now";
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const h = dep.getHours();
+    const m = dep.getMinutes();
+    const period = h >= 12 ? "pm" : "am";
+    const h12 = h % 12 || 12;
+    const time = m === 0 ? `${h12}${period}` : `${h12}:${m.toString().padStart(2, "0")}${period}`;
+    if (dep.toDateString() === tomorrow.toDateString()) return `Conditions for tomorrow ${time}`;
+    return `Conditions for ${dep.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })} ${time}`;
+  }, [departureTime]);
 
   const handleHome = useCallback(() => {
     window.location.href = "/";
@@ -96,6 +115,9 @@ export default function RoutePage() {
                   windDirectionDeg={detail.weather.windDirectionDeg}
                   windSpeedMph={detail.weather.windSpeedMph}
                 />
+                <p className="text-xs text-muted-foreground text-center">
+                  {conditionsLabel}
+                </p>
                 <RideInfo
                   weather={detail.weather}
                   distanceMeters={detail.route.distanceKm * 1000}
