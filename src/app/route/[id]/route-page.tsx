@@ -135,6 +135,7 @@ export default function RoutePage() {
                 <ShareButton
                   routeId={detail.route.id}
                   routeName={detail.route.name}
+                  departureTime={departureTime}
                 />
               </div>
               <div className="text-center pt-2">

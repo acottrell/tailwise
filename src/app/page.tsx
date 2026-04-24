@@ -271,6 +271,7 @@ export default function Home() {
                   <ShareButton
                     routeId={detail.route.id}
                     routeName={detail.route.name}
+                    departureTime={selectedDeparture}
                   />
                 </div>
               </>
