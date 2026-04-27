@@ -66,14 +66,14 @@ export async function GET(
 
   type CafeStopInput = { name: string; lat?: number; lng?: number };
   const rawStops = row.cafeStops as CafeStopInput[] | null;
-  let cafeStops: { name: string; position: { distanceKm: number; percent: number; reversed: boolean } | null }[] | null = null;
+  let cafeStops: { name: string; lat?: number; lng?: number; position: { distanceKm: number; percent: number; reversed: boolean } | null }[] | null = null;
 
   if (Array.isArray(rawStops) && rawStops.length > 0) {
     cafeStops = rawStops.map((c) => {
       const pos = c.lat != null && c.lng != null
         ? computeCafePosition(c.lat, c.lng)
         : null;
-      return { name: c.name, position: pos };
+      return { name: c.name, lat: c.lat, lng: c.lng, position: pos };
     });
     cafeStops.sort((a, b) => {
       if (a.position && b.position) return a.position.distanceKm - b.position.distanceKm;
@@ -87,6 +87,8 @@ export async function GET(
       name: row.name,
       destination: row.destination,
       cafeStop: row.cafeStop,
+      cafeLat: row.cafeLat,
+      cafeLng: row.cafeLng,
       cafePosition,
       cafeStops,
       distanceKm: row.distanceKm,

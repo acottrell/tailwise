@@ -126,6 +126,8 @@ export default function RoutePage() {
                 <CafeInfo
                   routeName={detail.route.name}
                   cafeStop={detail.route.cafeStop}
+                  cafeLat={detail.route.cafeLat}
+                  cafeLng={detail.route.cafeLng}
                   coordinates={detail.route.coordinates}
                   cafePosition={detail.route.cafePosition}
                   cafeStops={detail.route.cafeStops}
