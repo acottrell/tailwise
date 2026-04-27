@@ -14,8 +14,10 @@ export interface RouteDetail {
     name: string;
     destination: string | null;
     cafeStop: string | null;
+    cafeLat: number | null;
+    cafeLng: number | null;
     cafePosition: { distanceKm: number; percent: number; reversed?: boolean } | null;
-    cafeStops: { name: string; position: { distanceKm: number; percent: number; reversed?: boolean } }[] | null;
+    cafeStops: { name: string; lat?: number; lng?: number; position: { distanceKm: number; percent: number; reversed?: boolean } }[] | null;
     distanceKm: number;
     elevationGainM: number | null;
     routeType: string;

@@ -11,12 +11,16 @@ interface CafePosition {
 
 interface CafeStopItem {
   name: string;
+  lat?: number;
+  lng?: number;
   position: CafePosition;
 }
 
 interface CafeInfoProps {
   routeName: string;
   cafeStop?: string | null;
+  cafeLat?: number | null;
+  cafeLng?: number | null;
   coordinates: Coordinate[];
   cafePosition?: CafePosition | null;
   cafeStops?: CafeStopItem[] | null;
@@ -97,16 +101,21 @@ function ExternalIcon() {
 function CafeRow({
   name,
   position,
+  lat,
+  lng,
   centroid,
   totalDistanceKm,
 }: {
   name: string;
   position: CafePosition | null;
+  lat?: number;
+  lng?: number;
   centroid: { lat: number; lng: number };
   totalDistanceKm: number;
 }) {
   const searchQuery = encodeURIComponent(name);
-  const googleMapsUrl = `https://www.google.com/maps/search/${searchQuery}/@${centroid.lat},${centroid.lng},13z`;
+  const anchor = lat != null && lng != null ? `${lat},${lng}` : `${centroid.lat},${centroid.lng}`;
+  const googleMapsUrl = `https://www.google.com/maps/search/${searchQuery}/@${anchor},17z`;
 
   return (
     <div className="flex items-center justify-between gap-3">
@@ -134,6 +143,8 @@ function CafeRow({
 export function CafeInfo({
   routeName,
   cafeStop,
+  cafeLat,
+  cafeLng,
   coordinates,
   cafePosition,
   cafeStops,
@@ -142,16 +153,16 @@ export function CafeInfo({
   const centroid = getCentroid(coordinates);
 
   // Prefer multi-cafe array; fall back to single cafe fields
-  const cafes: { name: string; position: CafePosition | null }[] = [];
+  const cafes: { name: string; lat?: number; lng?: number; position: CafePosition | null }[] = [];
 
   if (cafeStops && cafeStops.length > 0) {
     for (const c of cafeStops) {
-      cafes.push({ name: c.name, position: c.position });
+      cafes.push({ name: c.name, lat: c.lat, lng: c.lng, position: c.position });
     }
   } else {
     const name = cafeStop || extractCafeName(routeName);
     if (name) {
-      cafes.push({ name, position: cafePosition || null });
+      cafes.push({ name, lat: cafeLat ?? undefined, lng: cafeLng ?? undefined, position: cafePosition || null });
     }
   }
 
@@ -175,6 +186,8 @@ export function CafeInfo({
               <CafeRow
                 name={cafe.name}
                 position={cafe.position}
+                lat={cafe.lat}
+                lng={cafe.lng}
                 centroid={centroid}
                 totalDistanceKm={totalDistanceKm}
               />
