@@ -31,10 +31,11 @@ export default function RoutePage() {
 
   const { loading, error, detail, load } = useRouteDetail();
 
-  const departureTime = useMemo(
-    () => (departParam ? new Date(departParam) : undefined),
-    [departParam]
-  );
+  const departureTime = useMemo(() => {
+    if (!departParam) return undefined;
+    const d = new Date(departParam);
+    return d > new Date() ? d : undefined;
+  }, [departParam]);
 
   useEffect(() => {
     load(routeId, departureTime).catch(() => {});
