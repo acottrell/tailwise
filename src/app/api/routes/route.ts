@@ -109,9 +109,26 @@ export async function POST(request: NextRequest) {
     const cafeNames = cleanCafe
       ? cleanCafe.split(",").map((s) => s.trim()).filter(Boolean)
       : [];
-    const cafeStopsJson = cafeNames.length > 1
-      ? cafeNames.map((name) => ({ name }))
-      : null;
+
+    let cafeLat: number | null = null;
+    let cafeLng: number | null = null;
+    const cafeStopsJson: { name: string; lat?: number; lng?: number }[] | null =
+      cafeNames.length > 1 ? [] : null;
+
+    if (cafeNames.length > 0) {
+      const coords = await geocodeCafes(cafeNames, center);
+      cafeLat = coords[0]?.lat ?? null;
+      cafeLng = coords[0]?.lng ?? null;
+      if (cafeStopsJson) {
+        for (let i = 0; i < cafeNames.length; i++) {
+          const loc = coords[i];
+          cafeStopsJson.push({
+            name: cafeNames[i],
+            ...(loc && { lat: loc.lat, lng: loc.lng }),
+          });
+        }
+      }
+    }
 
     const id = nanoid();
     await insertRoute({
@@ -120,6 +137,8 @@ export async function POST(request: NextRequest) {
       name: strava.name,
       destination: null,
       cafeStop: cleanCafe,
+      cafeLat,
+      cafeLng,
       cafeStops: cafeStopsJson,
       distanceKm: strava.distance / 1000,
       elevationGainM: strava.elevationGain,
@@ -158,6 +177,28 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ error: msg }, { status: 500 });
   }
+}
+
+async function geocodeCafes(
+  names: string[],
+  center: { lat: number; lng: number }
+): Promise<({ lat: number; lng: number } | null)[]> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) return names.map(() => null);
+
+  return Promise.all(
+    names.map(async (name) => {
+      try {
+        const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(name)}&inputtype=textquery&fields=geometry&locationbias=circle:30000@${center.lat},${center.lng}&key=${apiKey}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const loc = data?.candidates?.[0]?.geometry?.location;
+        return loc ? { lat: loc.lat, lng: loc.lng } : null;
+      } catch {
+        return null;
+      }
+    })
+  );
 }
 
 async function sendNotification(

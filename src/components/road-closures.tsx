@@ -19,7 +19,6 @@ function getCentroid(coords: Coordinate[]) {
 
 export function RoadClosures({ coordinates }: RoadClosuresProps) {
   const [url, setUrl] = useState<string | null>(null);
-  const [areaName, setAreaName] = useState<string | null>(null);
 
   useEffect(() => {
     const centroid = getCentroid(coordinates);
@@ -32,11 +31,9 @@ export function RoadClosures({ coordinates }: RoadClosuresProps) {
       .then((data) => {
         const county = data?.address?.county || data?.address?.state_district || "Hertfordshire";
         const slug = county.toLowerCase().replace(/\s+/g, "-");
-        setAreaName(county);
         setUrl(`https://one.network/uk/${slug}`);
       })
       .catch(() => {
-        setAreaName("Hertfordshire");
         setUrl("https://one.network/uk/hertfordshire");
       });
   }, [coordinates]);
@@ -50,7 +47,7 @@ export function RoadClosures({ coordinates }: RoadClosuresProps) {
           <div className="space-y-0.5 min-w-0">
             <p className="text-sm font-medium">Road closures</p>
             <p className="text-xs text-muted-foreground">
-              Check roadworks in {areaName} on one.network
+              Check roadworks on one.network
             </p>
           </div>
           <a
