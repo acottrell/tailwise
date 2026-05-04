@@ -35,7 +35,7 @@ export async function fetchWeatherServer(
   url.searchParams.set("longitude", lng.toFixed(4));
   url.searchParams.set(
     "hourly",
-    "wind_speed_10m,wind_direction_10m,precipitation_probability,temperature_2m"
+    "wind_speed_10m,wind_direction_10m,precipitation_probability,temperature_2m,apparent_temperature,relative_humidity_2m"
   );
   url.searchParams.set("daily", "sunrise,sunset");
   url.searchParams.set("wind_speed_unit", "mph");
@@ -61,6 +61,8 @@ export async function fetchWeatherServer(
       windDirectionDeg: hourlyData.wind_direction_10m[i],
       precipitationProbability: hourlyData.precipitation_probability[i],
       temperatureCelsius: hourlyData.temperature_2m[i],
+      apparentTemperatureCelsius: hourlyData.apparent_temperature[i],
+      relativeHumidity: hourlyData.relative_humidity_2m[i],
     })
   );
 

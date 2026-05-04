@@ -63,11 +63,27 @@ export function getWeatherForWindow(
     windowHours.reduce((sum, h) => sum + h.temperatureCelsius, 0) /
     windowHours.length;
 
+  const avgApparentTemp =
+    windowHours.reduce((sum, h) => sum + h.apparentTemperatureCelsius, 0) /
+    windowHours.length;
+
+  const avgHumidity =
+    windowHours.reduce((sum, h) => sum + h.relativeHumidity, 0) /
+    windowHours.length;
+
+  const firstTemp = windowHours[0].temperatureCelsius;
+  const lastTemp = windowHours[windowHours.length - 1].temperatureCelsius;
+  const warmingTrend = lastTemp - firstTemp;
+
   return {
     windSpeedMph: Math.round(avgWindSpeed * 10) / 10,
     windDirectionDeg: Math.round(avgWindDir),
     precipitationProbability: maxPrecip,
     temperatureCelsius: Math.round(avgTemp * 10) / 10,
+    apparentTemperatureCelsius: Math.round(avgApparentTemp * 10) / 10,
+    relativeHumidity: Math.round(avgHumidity),
+    warmingTrend: Math.round(warmingTrend * 10) / 10,
+    rideDurationHours,
     hourly,
     sunTimes,
   };
@@ -97,6 +113,10 @@ export function getWeatherSnapshot(
     windDirectionDeg: Math.round(hour.windDirectionDeg),
     precipitationProbability: hour.precipitationProbability,
     temperatureCelsius: Math.round(hour.temperatureCelsius * 10) / 10,
+    apparentTemperatureCelsius: Math.round(hour.apparentTemperatureCelsius * 10) / 10,
+    relativeHumidity: Math.round(hour.relativeHumidity),
+    warmingTrend: 0,
+    rideDurationHours: 0,
     hourly,
     sunTimes: [],
   };

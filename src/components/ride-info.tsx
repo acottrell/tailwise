@@ -9,11 +9,33 @@ interface RideInfoProps {
   elevationGainMeters?: number;
 }
 
-function getKitAdvice(tempC: number): { label: string; detail: string } {
-  if (tempC >= 20) return { label: "Shorts & jersey", detail: "Warm enough for summer kit" };
-  if (tempC >= 14) return { label: "Shorts & arm warmers", detail: "Comfortable but cool on descents" };
-  if (tempC >= 8) return { label: "Bib tights & long sleeve", detail: "Layer up, cool ride" };
-  if (tempC >= 2) return { label: "Full winter kit", detail: "Bib tights, winter jacket, gloves" };
+function getKitAdvice(weather: WeatherData): { label: string; detail: string } {
+  const feelsLike = weather.apparentTemperatureCelsius;
+  const temp = weather.temperatureCelsius;
+  const wind = weather.windSpeedMph;
+  const humidity = weather.relativeHumidity;
+  const warming = weather.warmingTrend;
+  const longRide = weather.rideDurationHours >= 2.5;
+
+  // Effective temperature: what it'll feel like on the bike factoring in
+  // warming trend (long rides warm up mid-ride) and humidity (humid air
+  // feels warmer, sweat doesn't evaporate as well)
+  let effective = feelsLike;
+  if (longRide && warming > 3) effective += 1.5;
+  else if (longRide && warming > 1) effective += 0.5;
+  if (humidity > 75 && temp > 12) effective += 1;
+
+  if (effective >= 19) return { label: "Shorts & jersey", detail: "Summer kit" };
+  if (effective >= 15) {
+    if (wind <= 10) return { label: "Shorts & jersey", detail: "Light layers if starting early" };
+    return { label: "Shorts & arm warmers", detail: "Comfortable but breezy" };
+  }
+  if (effective >= 11) {
+    if (longRide && warming > 2) return { label: "Shorts & arm warmers", detail: "Cool start, warming up" };
+    return { label: "Bib tights & long sleeve", detail: "Layer up, cool ride" };
+  }
+  if (effective >= 5) return { label: "Bib tights & long sleeve", detail: "Cold one — winter base layer" };
+  if (effective >= 0) return { label: "Full winter kit", detail: "Bib tights, winter jacket, gloves" };
   return { label: "Stay indoors?", detail: "Sub-zero. Think twice" };
 }
 
@@ -57,7 +79,7 @@ function InfoRow({
 export function RideInfo({ weather, distanceMeters, elevationGainMeters }: RideInfoProps) {
   const windDir = compassDirection(weather.windDirectionDeg);
   const temp = Math.round(weather.temperatureCelsius);
-  const kit = getKitAdvice(weather.temperatureCelsius);
+  const kit = getKitAdvice(weather);
   const rain = getRainAdvice(weather.precipitationProbability);
 
   const distanceMiles = distanceMeters ? (distanceMeters / 1609.344).toFixed(1) : null;
