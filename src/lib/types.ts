@@ -29,6 +29,8 @@ export interface HourlyWeather {
   windDirectionDeg: number;
   precipitationProbability: number;
   temperatureCelsius: number;
+  apparentTemperatureCelsius: number;
+  relativeHumidity: number;
 }
 
 export interface SunTimes {
@@ -42,6 +44,10 @@ export interface WeatherData {
   windDirectionDeg: number;
   precipitationProbability: number;
   temperatureCelsius: number;
+  apparentTemperatureCelsius: number;
+  relativeHumidity: number;
+  warmingTrend: number;
+  rideDurationHours: number;
   hourly: HourlyWeather[];
   sunTimes: SunTimes[];
 }
