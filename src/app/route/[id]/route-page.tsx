@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { Header } from "@/components/header";
 import { DirectionCard } from "@/components/direction-card";
 import { RideInfo } from "@/components/ride-info";
+import { DeparturePicker } from "@/components/departure-picker";
 import { ShareButton } from "@/components/share-button";
 import { RoadClosures } from "@/components/road-closures";
 import { CafeInfo } from "@/components/cafe-info";
@@ -31,30 +32,24 @@ export default function RoutePage() {
 
   const { loading, error, detail, load } = useRouteDetail();
 
-  const departureTime = useMemo(() => {
+  const initialDeparture = useMemo(() => {
     if (!departParam) return undefined;
     const d = new Date(departParam);
     return d > new Date() ? d : undefined;
   }, [departParam]);
 
+  const [departureTime, setDepartureTime] = useState<Date | undefined>(initialDeparture);
+
   useEffect(() => {
     load(routeId, departureTime).catch(() => {});
   }, [routeId, departureTime, load]);
 
-  const conditionsLabel = useMemo(() => {
-    const dep = departureTime ?? new Date();
-    const now = new Date();
-    if (dep.toDateString() === now.toDateString()) return "Conditions now";
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const h = dep.getHours();
-    const m = dep.getMinutes();
-    const period = h >= 12 ? "pm" : "am";
-    const h12 = h % 12 || 12;
-    const time = m === 0 ? `${h12}${period}` : `${h12}:${m.toString().padStart(2, "0")}${period}`;
-    if (dep.toDateString() === tomorrow.toDateString()) return `Conditions for tomorrow ${time}`;
-    return `Conditions for ${dep.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })} ${time}`;
-  }, [departureTime]);
+  const handleDepartureChange = useCallback(
+    (time?: Date) => {
+      setDepartureTime(time);
+    },
+    []
+  );
 
   const handleHome = useCallback(() => {
     window.location.href = "/";
@@ -116,9 +111,12 @@ export default function RoutePage() {
                   windDirectionDeg={detail.weather.windDirectionDeg}
                   windSpeedMph={detail.weather.windSpeedMph}
                 />
-                <p className="text-xs text-muted-foreground text-center">
-                  {conditionsLabel}
-                </p>
+                <DeparturePicker
+                  sunTimes={detail.weather.sunTimes}
+                  initialDepartureTime={initialDeparture}
+                  onDepartureChange={handleDepartureChange}
+                  loading={loading}
+                />
                 <RideInfo
                   weather={detail.weather}
                   distanceMeters={detail.route.distanceKm * 1000}
