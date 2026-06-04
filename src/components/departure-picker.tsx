@@ -149,18 +149,31 @@ export function DeparturePicker({ sunTimes, initialDepartureTime, onDepartureCha
       <div className="text-sm text-muted-foreground">
         Departing
       </div>
-      <select
-        value={selected}
-        onChange={(e) => handleChange(e.target.value)}
-        disabled={loading}
-        className="bg-transparent text-sm font-medium text-right cursor-pointer focus:outline-none disabled:opacity-50"
-      >
-        {options.map(([key, opt]) => (
-          <option key={key} value={key}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+      <div className="relative">
+        <select
+          value={selected}
+          onChange={(e) => handleChange(e.target.value)}
+          disabled={loading}
+          className="appearance-none bg-transparent text-sm font-medium text-right cursor-pointer focus:outline-none disabled:opacity-50 pr-5"
+        >
+          {options.map(([key, opt]) => (
+            <option key={key} value={key}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        <svg
+          viewBox="0 0 24 24"
+          className="absolute right-0 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </div>
     </div>
   );
 }
