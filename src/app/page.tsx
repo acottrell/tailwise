@@ -8,6 +8,7 @@ import { RouteInput } from "@/components/route-input";
 import { SubmitRoute } from "@/components/submit-route";
 import { DirectionCard } from "@/components/direction-card";
 import { RideInfo } from "@/components/ride-info";
+import { DeparturePicker } from "@/components/departure-picker";
 import { ShareButton } from "@/components/share-button";
 import { RoadClosures } from "@/components/road-closures";
 import { CafeInfo } from "@/components/cafe-info";
@@ -35,24 +36,6 @@ type View =
   | { type: "check-specific" }
   | { type: "submit" };
 
-function formatDepartureLabel(departure?: Date): string | null {
-  if (!departure) return null;
-  const now = new Date();
-  const isToday = departure.toDateString() === now.toDateString();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const isTomorrow = departure.toDateString() === tomorrow.toDateString();
-
-  const h = departure.getHours();
-  const m = departure.getMinutes();
-  const period = h >= 12 ? "pm" : "am";
-  const h12 = h % 12 || 12;
-  const time = m === 0 ? `${h12}${period}` : `${h12}:${m.toString().padStart(2, "0")}${period}`;
-
-  if (isToday) return `Conditions now`;
-  if (isTomorrow) return `Conditions for tomorrow ${time}`;
-  return `Conditions for ${departure.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })} ${time}`;
-}
 
 function WindTransition({ active }: { active: boolean }) {
   if (!active) return null;
@@ -131,8 +114,9 @@ export default function Home() {
   );
 
   const handleDepartureChange = useCallback(
-    async (time: Date) => {
+    async (time?: Date) => {
       if (view.type !== "route-detail") return;
+      setSelectedDeparture(time);
       try {
         await loadDetail(view.routeId, time);
       } catch {
@@ -249,11 +233,12 @@ export default function Home() {
                     windDirectionDeg={detail.weather.windDirectionDeg}
                     windSpeedMph={detail.weather.windSpeedMph}
                   />
-                  {selectedDeparture && formatDepartureLabel(selectedDeparture) && (
-                    <p className="text-xs text-muted-foreground text-center">
-                      {formatDepartureLabel(selectedDeparture)}
-                    </p>
-                  )}
+                  <DeparturePicker
+                    sunTimes={detail.weather.sunTimes}
+                    initialDepartureTime={selectedDeparture}
+                    onDepartureChange={handleDepartureChange}
+                    loading={detailLoading}
+                  />
                   <RideInfo
                     weather={detail.weather}
                     distanceMeters={detail.route.distanceKm * 1000}

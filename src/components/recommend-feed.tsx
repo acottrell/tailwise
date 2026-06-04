@@ -129,11 +129,12 @@ export function RecommendFeed({
       },
     ];
 
+    const tmrw = tomorrow.toLocaleDateString("en-GB", { weekday: "short" });
     const tomorrowGeneric: Opt[] = [
       {
         key: "830",
         label: "Tomorrow 8:30am",
-        shortLabel: "8:30am",
+        shortLabel: `${tmrw} 8:30am`,
         getTime: () => {
           const d = new Date(tomorrow);
           d.setHours(8, 30, 0, 0);
@@ -143,7 +144,7 @@ export function RecommendFeed({
       {
         key: "midday",
         label: "Tomorrow midday",
-        shortLabel: "Midday",
+        shortLabel: `${tmrw} midday`,
         getTime: () => {
           const d = new Date(tomorrow);
           d.setHours(12, 0, 0, 0);
@@ -153,7 +154,7 @@ export function RecommendFeed({
       {
         key: "6pm",
         label: "Tomorrow 6pm",
-        shortLabel: "6pm",
+        shortLabel: `${tmrw} 6pm`,
         getTime: () => {
           const d = new Date(tomorrow);
           d.setHours(18, 0, 0, 0);
