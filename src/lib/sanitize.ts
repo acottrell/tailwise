@@ -35,6 +35,22 @@ export function sanitizeOrReject(
 }
 
 /**
+ * Escape HTML special characters for safe interpolation into markup
+ * (e.g. notification emails, where values may originate from third-party APIs).
+ */
+const HTML_ESCAPES: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+};
+
+export function escapeHtml(input: string): string {
+  return input.replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);
+}
+
+/**
  * Validate a Strava route URL strictly.
  */
 const STRAVA_URL_RE = /^https:\/\/www\.strava\.com\/routes\/\d+$/;
