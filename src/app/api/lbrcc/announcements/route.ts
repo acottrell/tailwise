@@ -6,17 +6,7 @@ import {
   deleteWeeklyAnnouncement,
 } from "@/lib/db/queries";
 import { sanitizeOrReject } from "@/lib/sanitize";
-
-function verifyAdmin(request: NextRequest): boolean {
-  const secret = process.env.LBRCC_ADMIN_SECRET;
-  if (!secret) return false;
-
-  const cookie = request.cookies.get("lbrcc_admin")?.value;
-  if (cookie === secret) return true;
-
-  const auth = request.headers.get("authorization");
-  return auth === `Bearer ${secret}`;
-}
+import { isAuthorizedLbrcc } from "@/lib/auth";
 
 const announcementSchema = z.object({
   weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -27,7 +17,7 @@ const announcementSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  if (!verifyAdmin(request)) {
+  if (!isAuthorizedLbrcc(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -64,7 +54,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  if (!verifyAdmin(request)) {
+  if (!isAuthorizedLbrcc(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

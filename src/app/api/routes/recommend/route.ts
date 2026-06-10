@@ -4,6 +4,7 @@ import { findApprovedRoutes, dbRowToParsedRoute } from "@/lib/db/queries";
 import { fetchWeatherServer } from "@/lib/weather-server";
 import { getWeatherForWindow, getWeatherSnapshot, estimateRideDuration } from "@/lib/weather-client";
 import { getRecommendation } from "@/lib/wind-advisor";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { CLUB_HOME_LAT, CLUB_HOME_LNG } from "@/constants";
 
 interface HourlyEntry {
@@ -105,6 +106,13 @@ const querySchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+  const limited = await enforceRateLimit(request, {
+    name: "recommend",
+    limit: 30,
+    window: "1 m",
+  });
+  if (limited) return limited;
+
   const { searchParams } = request.nextUrl;
   const parsed = querySchema.safeParse({
     minDistanceKm: searchParams.get("minDistanceKm") ?? undefined,

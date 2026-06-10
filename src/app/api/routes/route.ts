@@ -6,7 +6,8 @@ import { decodePolyline } from "@/lib/polyline";
 import { analyzeRoute } from "@/lib/route-analyzer";
 import { centroid } from "@/lib/geo-utils";
 import { extractRouteId, fetchStravaRoute, getServerAccessToken } from "@/lib/strava";
-import { sanitizeOrReject, isValidStravaUrl } from "@/lib/sanitize";
+import { sanitizeOrReject, isValidStravaUrl, escapeHtml } from "@/lib/sanitize";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 const submitSchema = z.object({
   stravaUrl: z.string().url(),
@@ -14,30 +15,15 @@ const submitSchema = z.object({
   sourceName: z.string().optional(),
 });
 
-// Simple in-memory rate limiter: 5 submissions per hour per IP
-const submissions = new Map<string, number[]>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const hourAgo = now - 60 * 60 * 1000;
-  const times = (submissions.get(ip) || []).filter((t) => t > hourAgo);
-  submissions.set(ip, times);
-  if (times.length >= 5) return true;
-  times.push(now);
-  return false;
-}
-
 export async function POST(request: NextRequest) {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    "unknown";
-
-  if (isRateLimited(ip)) {
-    return NextResponse.json(
-      { error: "Too many submissions. Try again later." },
-      { status: 429 }
-    );
-  }
+  // Submissions trigger Strava + Google Places + Resend email calls, so this
+  // is the most abuse-sensitive endpoint. 5 per hour per IP.
+  const limited = await enforceRateLimit(request, {
+    name: "submit",
+    limit: 5,
+    window: "1 h",
+  });
+  if (limited) return limited;
 
   const body = await request.json();
   const parsed = submitSchema.safeParse(body);
@@ -175,7 +161,12 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-    return NextResponse.json({ error: msg }, { status: 500 });
+    // Don't leak internal error details to the client.
+    console.error("Route submission failed:", msg);
+    return NextResponse.json(
+      { error: "Could not process this route. Please try again." },
+      { status: 500 }
+    );
   }
 }
 
@@ -213,6 +204,12 @@ async function sendNotification(
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://tailwise.app";
 
+  // Escape all interpolated values — routeName comes from the Strava API and
+  // is not trusted; submitter is already allowlist-sanitized but escape anyway.
+  const safeName = escapeHtml(routeName);
+  const safeUrl = escapeHtml(stravaUrl);
+  const safeSubmitter = submitter ? escapeHtml(submitter) : null;
+
   await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -222,14 +219,14 @@ async function sendNotification(
     body: JSON.stringify({
       from: "Tailwise <onboarding@resend.dev>",
       to: adminEmail,
-      subject: `New route submission: ${routeName}`,
+      subject: `New route submission: ${safeName}`,
       html: `
         <p>A new route has been submitted to Tailwise.</p>
         <ul>
-          <li><strong>Route:</strong> ${routeName}</li>
-          <li><strong>Strava:</strong> <a href="${stravaUrl}">${stravaUrl}</a></li>
-          <li><strong>Preview:</strong> <a href="${appUrl}/route/${routeId}">${routeName} on Tailwise</a></li>
-          ${submitter ? `<li><strong>Submitted by:</strong> ${submitter}</li>` : ""}
+          <li><strong>Route:</strong> ${safeName}</li>
+          <li><strong>Strava:</strong> <a href="${safeUrl}">${safeUrl}</a></li>
+          <li><strong>Preview:</strong> <a href="${appUrl}/route/${routeId}">${safeName} on Tailwise</a></li>
+          ${safeSubmitter ? `<li><strong>Submitted by:</strong> ${safeSubmitter}</li>` : ""}
         </ul>
         <p><a href="${appUrl}/admin">Review in admin</a></p>
       `,
