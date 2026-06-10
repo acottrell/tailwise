@@ -6,6 +6,7 @@ import { decodePolyline } from "@/lib/polyline";
 import { analyzeRoute } from "@/lib/route-analyzer";
 import { centroid } from "@/lib/geo-utils";
 import { extractRouteId, fetchStravaRoute, getServerAccessToken } from "@/lib/strava";
+import { isAuthorizedAdmin } from "@/lib/auth";
 
 const routeSchema = z.object({
   stravaUrl: z.string().url(),
@@ -23,8 +24,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const secret = request.headers.get("authorization")?.replace("Bearer ", "");
-  if (secret !== process.env.ADMIN_SECRET) {
+  if (!isAuthorizedAdmin(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

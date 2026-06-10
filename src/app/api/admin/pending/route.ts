@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findPendingRoutes } from "@/lib/db/queries";
+import { isAuthorizedAdmin } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
-  const secret = request.headers.get("authorization")?.replace("Bearer ", "");
-  if (secret !== process.env.ADMIN_SECRET) {
+  if (!isAuthorizedAdmin(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

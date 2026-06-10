@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { approveRoute, findRouteById } from "@/lib/db/queries";
+import { isAuthorizedAdmin } from "@/lib/auth";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const secret = request.headers.get("authorization")?.replace("Bearer ", "");
-  if (secret !== process.env.ADMIN_SECRET) {
+  if (!isAuthorizedAdmin(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

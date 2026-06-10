@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OPEN_METEO_BASE_URL } from "@/constants";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const querySchema = z.object({
@@ -8,6 +9,13 @@ const querySchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+  const limited = await enforceRateLimit(request, {
+    name: "weather",
+    limit: 30,
+    window: "1 m",
+  });
+  if (limited) return limited;
+
   const { searchParams } = request.nextUrl;
   const parsed = querySchema.safeParse({
     latitude: searchParams.get("latitude"),

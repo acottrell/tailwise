@@ -6,11 +6,20 @@ import { getRecommendation } from "@/lib/wind-advisor";
 import { colorizeSegments } from "@/lib/segment-colorizer";
 import { cafePositionOnRoute } from "@/lib/geo-utils";
 import { Coordinate } from "@/lib/types";
+import { isAuthorizedAdmin } from "@/lib/auth";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const limited = await enforceRateLimit(request, {
+    name: "route-detail",
+    limit: 60,
+    window: "1 m",
+  });
+  if (limited) return limited;
+
   const { id } = await params;
 
   const row = await findRouteById(id);
@@ -111,8 +120,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const secret = request.headers.get("authorization")?.replace("Bearer ", "");
-  if (secret !== process.env.ADMIN_SECRET) {
+  if (!isAuthorizedAdmin(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

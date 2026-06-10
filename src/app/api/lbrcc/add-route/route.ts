@@ -7,15 +7,7 @@ import { fetchStravaRoute, getServerAccessToken } from "@/lib/strava";
 import { decodePolyline } from "@/lib/polyline";
 import { analyzeRoute } from "@/lib/route-analyzer";
 import { centroid } from "@/lib/geo-utils";
-
-function verifyAdmin(request: NextRequest): boolean {
-  const secret = process.env.LBRCC_ADMIN_SECRET;
-  if (!secret) return false;
-  const cookie = request.cookies.get("lbrcc_admin")?.value;
-  if (cookie === secret) return true;
-  const auth = request.headers.get("authorization");
-  return auth === `Bearer ${secret}`;
-}
+import { isAuthorizedLbrcc } from "@/lib/auth";
 
 const schema = z.object({
   stravaUrl: z.string(),
@@ -24,7 +16,7 @@ const schema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  if (!verifyAdmin(request)) {
+  if (!isAuthorizedLbrcc(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
