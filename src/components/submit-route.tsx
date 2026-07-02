@@ -107,7 +107,7 @@ export function SubmitRoute({ onBack }: SubmitRouteProps) {
             type="url"
             value={stravaUrl}
             onChange={(e) => setStravaUrl(e.target.value)}
-            placeholder="https://www.strava.com/routes/123456"
+            placeholder="https://strava.com/routes/… or strava.app.link/…"
             required
             className="w-full rounded-lg border border-border bg-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
           />

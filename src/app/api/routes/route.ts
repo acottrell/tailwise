@@ -5,8 +5,8 @@ import { insertRoute, findRouteIdByStravaId } from "@/lib/db/queries";
 import { decodePolyline } from "@/lib/polyline";
 import { analyzeRoute } from "@/lib/route-analyzer";
 import { centroid } from "@/lib/geo-utils";
-import { extractRouteId, fetchStravaRoute, getServerAccessToken } from "@/lib/strava";
-import { sanitizeOrReject, isValidStravaUrl } from "@/lib/sanitize";
+import { extractRouteId, fetchStravaRoute, getServerAccessToken, resolveStravaAppLink } from "@/lib/strava";
+import { sanitizeOrReject, isValidStravaUrl, isStravaAppLink } from "@/lib/sanitize";
 
 const submitSchema = z.object({
   stravaUrl: z.string().url(),
@@ -58,6 +58,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Resolve app.link short URLs to canonical Strava URLs
+  let resolvedUrl = stravaUrl;
+  if (isStravaAppLink(stravaUrl)) {
+    try {
+      resolvedUrl = await resolveStravaAppLink(stravaUrl);
+    } catch {
+      return NextResponse.json(
+        { error: "Could not resolve this Strava link to a route. Try pasting the full strava.com/routes/… URL instead." },
+        { status: 400 }
+      );
+    }
+  }
+
   // Sanitize optional text fields
   const cleanCafe = cafeStop ? sanitizeOrReject(cafeStop, 100) : null;
   const cleanSource = sourceName ? sanitizeOrReject(sourceName, 50) : null;
@@ -75,7 +88,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const routeIdStr = extractRouteId(stravaUrl);
+  const routeIdStr = extractRouteId(resolvedUrl);
   if (!routeIdStr) {
     return NextResponse.json(
       { error: "Could not extract route ID from URL" },

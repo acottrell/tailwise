@@ -37,8 +37,13 @@ export function sanitizeOrReject(
 /**
  * Validate a Strava route URL strictly.
  */
-const STRAVA_URL_RE = /^https:\/\/www\.strava\.com\/routes\/\d+$/;
+const STRAVA_URL_RE = /^https:\/\/(www\.)?strava\.com\/routes\/\d+$/;
+const STRAVA_APP_LINK_RE = /^https:\/\/strava\.app\.link\/[a-zA-Z0-9_-]+$/;
 
 export function isValidStravaUrl(url: string): boolean {
-  return STRAVA_URL_RE.test(url);
+  return STRAVA_URL_RE.test(url) || STRAVA_APP_LINK_RE.test(url);
+}
+
+export function isStravaAppLink(url: string): boolean {
+  return STRAVA_APP_LINK_RE.test(url);
 }
