@@ -47,6 +47,26 @@ export function extractRouteId(url: string): string | null {
   return match ? match[1] : null;
 }
 
+export async function resolveStravaAppLink(url: string): Promise<string> {
+  const headers = {
+    "User-Agent":
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+  };
+  const res = await fetch(url, { redirect: "manual", headers });
+  const location = res.headers.get("location");
+  if (location && /strava\.com\/routes\/\d+/.test(location)) {
+    return location;
+  }
+  if (location) {
+    const res2 = await fetch(location, { redirect: "manual", headers });
+    const location2 = res2.headers.get("location");
+    if (location2 && /strava\.com\/routes\/\d+/.test(location2)) {
+      return location2;
+    }
+  }
+  throw new Error("Could not resolve Strava link to a route URL");
+}
+
 export async function fetchStravaRoute(
   routeId: string,
   accessToken: string
