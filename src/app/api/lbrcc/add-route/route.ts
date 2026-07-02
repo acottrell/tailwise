@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { insertRoute, findRouteIdByStravaId } from "@/lib/db/queries";
-import { isValidStravaUrl } from "@/lib/sanitize";
-import { fetchStravaRoute, getServerAccessToken } from "@/lib/strava";
+import { isValidStravaUrl, isStravaAppLink } from "@/lib/sanitize";
+import { extractRouteId, fetchStravaRoute, getServerAccessToken, resolveStravaAppLink } from "@/lib/strava";
 import { decodePolyline } from "@/lib/polyline";
 import { analyzeRoute } from "@/lib/route-analyzer";
 import { centroid } from "@/lib/geo-utils";
@@ -34,12 +34,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  const { stravaUrl, cafeStop, destination } = parsed.data;
+  let { stravaUrl } = parsed.data;
+  const { cafeStop, destination } = parsed.data;
   if (!isValidStravaUrl(stravaUrl)) {
     return NextResponse.json({ error: "Invalid Strava URL" }, { status: 400 });
   }
 
-  const routeIdStr = stravaUrl.match(/routes\/(\d+)/)?.[1];
+  if (isStravaAppLink(stravaUrl)) {
+    try {
+      stravaUrl = await resolveStravaAppLink(stravaUrl);
+    } catch {
+      return NextResponse.json(
+        { error: "Could not resolve this Strava link to a route" },
+        { status: 400 }
+      );
+    }
+  }
+
+  const routeIdStr = extractRouteId(stravaUrl);
   if (!routeIdStr) {
     return NextResponse.json({ error: "Could not extract route ID" }, { status: 400 });
   }
