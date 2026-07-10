@@ -3,8 +3,7 @@
 import { useState, useCallback } from "react";
 import { ParsedRoute, WeatherData, Recommendation, SegmentColor } from "@/lib/types";
 import { fetchWeather, getWeatherForWindow, estimateRideDuration } from "@/lib/weather-client";
-import { getRecommendation } from "@/lib/wind-advisor";
-import { colorizeSegments } from "@/lib/segment-colorizer";
+import { analyzeRide } from "@/lib/wind-advisor";
 
 interface WeatherResult {
   weather: WeatherData;
@@ -34,15 +33,11 @@ export function useWeather(): UseWeather {
         const duration = estimateRideDuration(route.totalDistanceKm);
         const { hourly, sunTimes, utcOffsetSeconds } = await fetchWeather(route.coordinates);
         const weather = getWeatherForWindow(hourly, sunTimes, departure, duration, utcOffsetSeconds);
-        const recommendation = getRecommendation(route, weather);
-
-        const shouldReverse = recommendation.direction === "reverse";
-
-        const segmentColors = colorizeSegments(
-          route.coordinates,
-          weather.windDirectionDeg,
-          weather.windSpeedMph,
-          shouldReverse
+        const { recommendation, segmentColors } = analyzeRide(
+          route,
+          hourly,
+          departure,
+          utcOffsetSeconds
         );
 
         const res: WeatherResult = {

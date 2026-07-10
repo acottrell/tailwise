@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
     const parsedRoute = dbRowToParsedRoute(row);
     const duration = estimateRideDuration(row.distanceKm);
     const weather = getWeatherForWindow(hourly, sunTimes, departure, duration, utcOffsetSeconds);
-    const recommendation = getRecommendation(parsedRoute, weather);
+    const recommendation = getRecommendation(parsedRoute, hourly, departure, utcOffsetSeconds);
 
     const score =
       recommendation.homewardTailwindMph -

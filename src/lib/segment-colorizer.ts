@@ -1,10 +1,20 @@
 import { Coordinate, SegmentColor } from "./types";
-import { bearing, tailwindComponent } from "./geo-utils";
+import { bearing, tailwindComponent, angleDifference } from "./geo-utils";
 import {
   TAILWIND_ANGLE_THRESHOLD,
   HEADWIND_ANGLE_THRESHOLD,
 } from "@/constants";
-import { toRad, angleDifference } from "./geo-utils";
+
+export function classifyWindAngle(
+  segBearing: number,
+  windFromDeg: number
+): SegmentColor["color"] {
+  const windToward = (windFromDeg + 180) % 360;
+  const angle = Math.abs(angleDifference(segBearing, windToward));
+  if (angle < TAILWIND_ANGLE_THRESHOLD) return "tailwind";
+  if (angle > HEADWIND_ANGLE_THRESHOLD) return "headwind";
+  return "crosswind";
+}
 
 export function colorizeSegments(
   coordinates: Coordinate[],
@@ -18,17 +28,7 @@ export function colorizeSegments(
 
   for (let i = 0; i < ordered.length - 1; i++) {
     const segBearing = bearing(ordered[i], ordered[i + 1]);
-    const windToward = (windDirectionDeg + 180) % 360;
-    const angle = Math.abs(angleDifference(segBearing, windToward));
-
-    let color: SegmentColor["color"];
-    if (angle < TAILWIND_ANGLE_THRESHOLD) {
-      color = "tailwind";
-    } else if (angle > HEADWIND_ANGLE_THRESHOLD) {
-      color = "headwind";
-    } else {
-      color = "crosswind";
-    }
+    const color = classifyWindAngle(segBearing, windDirectionDeg);
 
     segments.push({
       from: ordered[i],

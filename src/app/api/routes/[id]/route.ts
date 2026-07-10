@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { findRouteById, deleteRoute, dbRowToParsedRoute } from "@/lib/db/queries";
 import { fetchWeatherServer } from "@/lib/weather-server";
 import { getWeatherForWindow, estimateRideDuration } from "@/lib/weather-client";
-import { getRecommendation } from "@/lib/wind-advisor";
-import { colorizeSegments } from "@/lib/segment-colorizer";
+import { analyzeRide } from "@/lib/wind-advisor";
 import { cafePositionOnRoute } from "@/lib/geo-utils";
 import { Coordinate } from "@/lib/types";
 
@@ -34,16 +33,15 @@ export async function GET(
   const parsedRoute = dbRowToParsedRoute(row);
   const duration = estimateRideDuration(row.distanceKm);
   const weather = getWeatherForWindow(hourly, sunTimes, departure, duration, utcOffsetSeconds);
-  const recommendation = getRecommendation(parsedRoute, weather);
+  const { recommendation, segmentColors } = analyzeRide(
+    parsedRoute,
+    hourly,
+    departure,
+    utcOffsetSeconds
+  );
 
   const shouldReverse = recommendation.direction === "reverse";
   const meaningfulAdvantage = recommendation.tailwindAdvantage >= 1;
-  const segmentColors = colorizeSegments(
-    row.coordinates as Coordinate[],
-    weather.windDirectionDeg,
-    weather.windSpeedMph,
-    shouldReverse
-  );
 
   const isLoop = row.routeType === "loop";
   const flipCafe = isLoop && shouldReverse && meaningfulAdvantage;

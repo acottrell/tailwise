@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     const parsedRoute = dbRowToParsedRoute(route);
     const duration = estimateRideDuration(route.distanceKm);
     const weather = getWeatherForWindow(hourly, sunTimes, departure, duration, utcOffsetSeconds);
-    const recommendation = getRecommendation(parsedRoute, weather);
+    const recommendation = getRecommendation(parsedRoute, hourly, departure, utcOffsetSeconds);
 
     return NextResponse.json({
       recommendation,
