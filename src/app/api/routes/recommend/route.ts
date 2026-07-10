@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { findApprovedRoutes, dbRowToParsedRoute } from "@/lib/db/queries";
 import { fetchWeatherServer } from "@/lib/weather-server";
-import { getWeatherForWindow, getWeatherSnapshot, estimateRideDuration } from "@/lib/weather-client";
+import { getWeatherForWindow, getWeatherSnapshot, estimateRideDuration, toWallClockHour } from "@/lib/weather-client";
 import { getRecommendation } from "@/lib/wind-advisor";
 import { CLUB_HOME_LAT, CLUB_HOME_LNG } from "@/constants";
 
@@ -14,32 +14,45 @@ interface HourlyEntry {
   temperatureCelsius: number;
 }
 
-function getRidingInsight(hourly: HourlyEntry[], departure: Date): string | null {
-  const now = new Date();
-  const isToday = departure.toDateString() === now.toDateString();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const isTomorrow = departure.toDateString() === tomorrow.toDateString();
-  const weekday = departure.toLocaleDateString("en-GB", { weekday: "long" });
+function getRidingInsight(
+  hourly: HourlyEntry[],
+  departure: Date,
+  utcOffsetSeconds: number
+): string | null {
+  // All calendar reasoning happens on the forecast's wall clock, never the
+  // server's timezone (UTC on Vercel).
+  const departureWall = toWallClockHour(departure, utcOffsetSeconds);
+  const departureDate = departureWall.slice(0, 10);
+  const departureHour = parseInt(departureWall.slice(11, 13), 10);
+
+  const nowDate = toWallClockHour(new Date(), utcOffsetSeconds).slice(0, 10);
+  const tomorrowDate = toWallClockHour(
+    new Date(Date.now() + 24 * 3600_000),
+    utcOffsetSeconds
+  ).slice(0, 10);
+
+  const isToday = departureDate === nowDate;
+  const isTomorrow = departureDate === tomorrowDate;
+  const weekday = new Date(`${departureDate}T12:00:00Z`).toLocaleDateString(
+    "en-GB",
+    { weekday: "long", timeZone: "UTC" }
+  );
+
+  const wallHour = (h: HourlyEntry) => parseInt(h.time.slice(11, 13), 10);
 
   // Get daylight hours (6am-8pm) for the departure day
-  const dayStart = new Date(departure);
-  dayStart.setHours(6, 0, 0, 0);
-  const dayEnd = new Date(departure);
-  dayEnd.setHours(20, 0, 0, 0);
-
   const dayHours = hourly.filter((h) => {
-    const t = new Date(h.time);
-    return t >= dayStart && t <= dayEnd;
+    return (
+      h.time.slice(0, 10) === departureDate &&
+      wallHour(h) >= 6 &&
+      wallHour(h) <= 20
+    );
   });
 
   if (dayHours.length < 4) return null;
 
   // Find current hour's wind for comparison
-  const currentHour = dayHours.find((h) => {
-    const t = new Date(h.time);
-    return t.getHours() === departure.getHours();
-  });
+  const currentHour = dayHours.find((h) => wallHour(h) === departureHour);
   const currentWind = currentHour?.windSpeedMph ?? dayHours[0].windSpeedMph;
 
   // Find the calmest 2-hour window
@@ -53,7 +66,7 @@ function getRidingInsight(hourly: HourlyEntry[], departure: Date): string | null
     }
   }
 
-  const calmestHour = new Date(dayHours[calmestStart].time).getHours();
+  const calmestHour = wallHour(dayHours[calmestStart]);
   const dayLabel = isToday ? "today" : isTomorrow ? "tomorrow" : `on ${weekday}`;
 
   // Check for rain
@@ -69,12 +82,12 @@ function getRidingInsight(hourly: HourlyEntry[], departure: Date): string | null
   }
 
   // Check if wind changes significantly
-  const laterHours = dayHours.filter((h) => new Date(h.time).getHours() >= 14);
+  const laterHours = dayHours.filter((h) => wallHour(h) >= 14);
   const laterAvg = laterHours.length > 0
     ? laterHours.reduce((s, h) => s + h.windSpeedMph, 0) / laterHours.length
     : avgWind;
 
-  const earlyHours = dayHours.filter((h) => new Date(h.time).getHours() < 12);
+  const earlyHours = dayHours.filter((h) => wallHour(h) < 12);
   const earlyAvg = earlyHours.length > 0
     ? earlyHours.reduce((s, h) => s + h.windSpeedMph, 0) / earlyHours.length
     : avgWind;
@@ -131,7 +144,7 @@ export async function GET(request: NextRequest) {
     2,
     Math.ceil((departure.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) + 1
   );
-  const { hourly, sunTimes } = await fetchWeatherServer(
+  const { hourly, sunTimes, utcOffsetSeconds } = await fetchWeatherServer(
     CLUB_HOME_LAT,
     CLUB_HOME_LNG,
     Math.min(daysAhead, 16)
@@ -141,7 +154,7 @@ export async function GET(request: NextRequest) {
   const scored = allRoutes.map((row) => {
     const parsedRoute = dbRowToParsedRoute(row);
     const duration = estimateRideDuration(row.distanceKm);
-    const weather = getWeatherForWindow(hourly, sunTimes, departure, duration);
+    const weather = getWeatherForWindow(hourly, sunTimes, departure, duration, utcOffsetSeconds);
     const recommendation = getRecommendation(parsedRoute, weather);
 
     const score =
@@ -168,7 +181,7 @@ export async function GET(request: NextRequest) {
 
   // Header weather is a snapshot at the departure hour so it stays
   // stable across filters. Per-route scoring keeps the ride-window average.
-  const headerWeather = getWeatherSnapshot(hourly, departure);
+  const headerWeather = getWeatherSnapshot(hourly, departure, utcOffsetSeconds);
 
   const recommendations = ranked.map(({ row, recommendation }) => ({
     id: row.id,
@@ -189,7 +202,7 @@ export async function GET(request: NextRequest) {
     recommendation,
   }));
 
-  const ridingInsight = getRidingInsight(hourly, departure);
+  const ridingInsight = getRidingInsight(hourly, departure, utcOffsetSeconds);
 
   return NextResponse.json({
     weather: headerWeather

@@ -71,7 +71,8 @@ export async function GET(request: NextRequest) {
         weatherData.hourly,
         weatherData.sunTimes,
         departure,
-        duration
+        duration,
+        weatherData.utcOffsetSeconds
       );
       recommendation = getRecommendation(parsedRoute, weather);
     }

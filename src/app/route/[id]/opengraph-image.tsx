@@ -49,14 +49,14 @@ export default async function Image({
       }
 
       try {
-        const { hourly, sunTimes } = await fetchWeatherServer(
+        const { hourly, sunTimes, utcOffsetSeconds } = await fetchWeatherServer(
           route.centroidLat,
           route.centroidLng,
           2
         );
         const parsed = dbRowToParsedRoute(route);
         const dur = estimateRideDuration(route.distanceKm);
-        const weather = getWeatherForWindow(hourly, sunTimes, new Date(), dur);
+        const weather = getWeatherForWindow(hourly, sunTimes, new Date(), dur, utcOffsetSeconds);
         const rec = getRecommendation(parsed, weather);
 
         windInfo = `${compassDirection(weather.windDirectionDeg)} ${Math.round(weather.windSpeedMph)} mph`;
