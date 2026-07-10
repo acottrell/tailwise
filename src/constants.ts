@@ -1,4 +1,7 @@
-export const ASSUMED_SPEED_KMH = 20;
+export const ASSUMED_SPEED_KMH = 25.75; // 16 mph club pace
+// How much more the final kilometre counts than the first when scoring
+// direction choice — "minimise headwind when you're tired".
+export const FATIGUE_END_WEIGHT = 2;
 export const LOOP_CLOSE_THRESHOLD_KM = 0.5;
 export const OUT_AND_BACK_THRESHOLD = 0.15;
 export const MAX_ROUTE_POINTS = 500;

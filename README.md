@@ -27,7 +27,7 @@ Built as a personal project for me and other friends, then extended for my local
 - **Wind-optimised recommendations** - Routes ranked by tailwind advantage on the homeward leg. Confidence levels from "ride either way" to "strong tailwind home."
 - **Segment colouring** - Map view colours each route segment by wind condition (green = tailwind, red = headwind).
 - **Mobile-first** - Designed for checking on your phone and sharing links with other riders.
-- **Route analysis** - Automatically classifies routes as loops, out-and-backs, or point-to-point. Detects clockwise orientation. Calculates outbound and homeward bearings for wind comparison.
+- **Route analysis** - Automatically classifies routes as loops, out-and-backs, or point-to-point. Detects clockwise orientation. Simulates the ride segment by segment for wind scoring.
 - **Cafe stops** - Routes show nearby cafes via Google Places. Because the mid-ride coffee & cake is non-negotiable :).
 - **Road closure link** - Links out to one.network to look for road closures. Ideally this would pre-analyse the route but this API is not publicly available, will aim to improve the experience.
 - **LBRCC club rides** - Dedicated section for weekly group rides with wind analysis per ride, announcements, and group labels (G1/G2/G3).
@@ -49,13 +49,17 @@ Built as a personal project for me and other friends, then extended for my local
 
 ## How the wind logic works
 
-1. Each route has an outbound bearing and a homeward bearing (calculated from the route geometry)
-2. The current wind direction and speed come from Open-Meteo
-3. For each direction you could ride the route, Tailwise calculates the tailwind component on the homeward leg
-4. The direction with more tailwind going home wins
-5. Advantage thresholds: < 2 mph = "ride either way", 2-5 mph = "moderate", > 5 mph = "strong"
+Tailwise simulates riding the route in both directions:
 
-The goal is simple: minimise headwind when you're tired.
+1. The hourly wind forecast comes from Open-Meteo
+2. The ride is walked segment by segment at an assumed 16 mph, giving each segment a timestamp
+3. Each segment's tailwind component is scored against the forecast for the hour the rider reaches it. The ride home is scored on the wind at that time, not on conditions at departure
+4. Segments late in the ride are weighted more heavily, because a tailwind matters most on tired legs
+5. The direction with the better score wins. Thresholds: under 2 mph of advantage = "ride either way", 2-5 mph = "moderate", over 5 mph = "strong"
+
+On a closed loop in steady wind, direction makes no difference: each stretch of tailwind in one direction becomes headwind in the other, and the two scores cancel. Direction advice matters when the wind shifts or builds during the ride.
+
+The map's segment colouring comes from the same simulation, so the map and the recommendation always match.
 
 ## Local development
 

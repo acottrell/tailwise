@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         const parsedRoute = dbRowToParsedRoute(route);
         const duration = estimateRideDuration(route.distanceKm);
         const weather = getWeatherForWindow(hourly, sunTimes, new Date(), duration, utcOffsetSeconds);
-        const rec = getRecommendation(parsedRoute, weather);
+        const rec = getRecommendation(parsedRoute, hourly, new Date(), utcOffsetSeconds);
 
         const windDir = compassDirection(weather.windDirectionDeg);
         const windSpeed = Math.round(weather.windSpeedMph);

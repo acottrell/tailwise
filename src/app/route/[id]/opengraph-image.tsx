@@ -57,7 +57,7 @@ export default async function Image({
         const parsed = dbRowToParsedRoute(route);
         const dur = estimateRideDuration(route.distanceKm);
         const weather = getWeatherForWindow(hourly, sunTimes, new Date(), dur, utcOffsetSeconds);
-        const rec = getRecommendation(parsed, weather);
+        const rec = getRecommendation(parsed, hourly, new Date(), utcOffsetSeconds);
 
         windInfo = `${compassDirection(weather.windDirectionDeg)} ${Math.round(weather.windSpeedMph)} mph`;
         temp = `${Math.round(weather.temperatureCelsius)}°C`;

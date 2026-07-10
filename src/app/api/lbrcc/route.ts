@@ -5,7 +5,6 @@ import {
   dbRowToParsedRoute,
 } from "@/lib/db/queries";
 import { fetchWeatherServer } from "@/lib/weather-server";
-import { getWeatherForWindow, estimateRideDuration } from "@/lib/weather-client";
 import { getRecommendation } from "@/lib/wind-advisor";
 
 function getMonday(d: Date): string {
@@ -66,15 +65,12 @@ export async function GET(request: NextRequest) {
       const departure = new Date(rideData.rideDate + "T00:00:00");
       departure.setHours(h, m, 0, 0);
 
-      const duration = estimateRideDuration(route.distanceKm);
-      const weather = getWeatherForWindow(
+      recommendation = getRecommendation(
+        parsedRoute,
         weatherData.hourly,
-        weatherData.sunTimes,
         departure,
-        duration,
         weatherData.utcOffsetSeconds
       );
-      recommendation = getRecommendation(parsedRoute, weather);
     }
 
     return {
