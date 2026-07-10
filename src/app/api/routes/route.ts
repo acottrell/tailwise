@@ -4,7 +4,8 @@ import { nanoid } from "nanoid";
 import { insertRoute, findRouteIdByStravaId } from "@/lib/db/queries";
 import { decodePolyline } from "@/lib/polyline";
 import { analyzeRoute } from "@/lib/route-analyzer";
-import { centroid } from "@/lib/geo-utils";
+import { centroid, cafePositionOnRoute } from "@/lib/geo-utils";
+import { Coordinate } from "@/lib/types";
 import { extractRouteId, fetchStravaRoute, getServerAccessToken, resolveStravaAppLink } from "@/lib/strava";
 import { sanitizeOrReject, isValidStravaUrl, isStravaAppLink } from "@/lib/sanitize";
 
@@ -129,7 +130,7 @@ export async function POST(request: NextRequest) {
       cafeNames.length > 1 ? [] : null;
 
     if (cafeNames.length > 0) {
-      const coords = await geocodeCafes(cafeNames, center);
+      const coords = await geocodeCafes(cafeNames, analyzed.coordinates);
       cafeLat = coords[0]?.lat ?? null;
       cafeLng = coords[0]?.lng ?? null;
       if (cafeStopsJson) {
@@ -194,24 +195,46 @@ export async function POST(request: NextRequest) {
 
 async function geocodeCafes(
   names: string[],
-  center: { lat: number; lng: number }
+  routeCoords: Coordinate[]
 ): Promise<({ lat: number; lng: number } | null)[]> {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-  if (!apiKey) return names.map(() => null);
+  // Nominatim (OpenStreetMap): free, no key. Its usage policy caps at one
+  // request per second, so cafes are geocoded sequentially. Cafe names are
+  // often generic ("The Hub"), so rather than trusting the top hit, take
+  // up to ten candidates near the route and keep the one closest to the
+  // polyline — and only if it's within 1km of it.
+  const center = centroid(routeCoords);
+  const box = 0.4;
+  const viewbox = `${center.lng - box},${center.lat + box},${center.lng + box},${center.lat - box}`;
+  const results: ({ lat: number; lng: number } | null)[] = [];
 
-  return Promise.all(
-    names.map(async (name) => {
-      try {
-        const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(name)}&inputtype=textquery&fields=geometry&locationbias=circle:30000@${center.lat},${center.lng}&key=${apiKey}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        const loc = data?.candidates?.[0]?.geometry?.location;
-        return loc ? { lat: loc.lat, lng: loc.lng } : null;
-      } catch {
-        return null;
+  for (const name of names) {
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&limit=10&viewbox=${viewbox}&bounded=1`;
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent": "tailwise/1.0 (https://tailwise-cycle.vercel.app)",
+        },
+      });
+      const data: { lat: string; lon: string }[] = await res.json();
+      let best: { lat: number; lng: number } | null = null;
+      let bestOff = Infinity;
+      for (const hit of Array.isArray(data) ? data : []) {
+        const loc = { lat: parseFloat(hit.lat), lng: parseFloat(hit.lon) };
+        const off = cafePositionOnRoute(routeCoords, loc).offRouteMeters;
+        if (off < bestOff) {
+          bestOff = off;
+          best = loc;
+        }
       }
-    })
-  );
+      results.push(bestOff <= 1000 ? best : null);
+    } catch {
+      results.push(null);
+    }
+    if (names.length > 1) {
+      await new Promise((resolve) => setTimeout(resolve, 1100));
+    }
+  }
+  return results;
 }
 
 async function sendNotification(
