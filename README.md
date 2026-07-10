@@ -12,7 +12,7 @@
 
 Tailwise takes a library of cycling routes and ranks them based on real-time wind conditions. For each route, it calculates whether you're better off riding it as-planned or in reverse, and tells you how strong the tailwind advantage is on the homeward leg.
 
-It also integrates with Strava, shows cafes along the way via Google Places, and has a dedicated portal for Leighton Buzzard Road Cycling Club weekly rides.
+It also integrates with Strava, pins cafe stops along the way, and has a dedicated portal for Leighton Buzzard Road Cycling Club weekly rides.
 
 ![Route detail with wind segment colouring](docs/tailwise-mobile-2.png)
 
@@ -28,7 +28,7 @@ Built as a personal project for me and other friends, then extended for my local
 - **Segment colouring** - Map view colours each route segment by wind condition (green = tailwind, red = headwind).
 - **Mobile-first** - Designed for checking on your phone and sharing links with other riders.
 - **Route analysis** - Automatically classifies routes as loops, out-and-backs, or point-to-point. Detects clockwise orientation. Simulates the ride segment by segment for wind scoring.
-- **Cafe stops** - Routes show nearby cafes via Google Places. Because the mid-ride coffee & cake is non-negotiable :).
+- **Cafe stops** - Routes show their cafe stop pinned at the right mile, geocoded via OpenStreetMap. Because the mid-ride coffee & cake is non-negotiable :).
 - **Road closure link** - Links out to one.network to look for road closures. Ideally this would pre-analyse the route but this API is not publicly available, will aim to improve the experience.
 - **LBRCC club rides** - Dedicated section for weekly group rides with wind analysis per ride, announcements, and group labels (G1/G2/G3).
 - **Strava integration** - Paste any public Strava route URL to check today's wind conditions against it. (Currently hidden from the live site due to Strava's non-verified API limitations.)
