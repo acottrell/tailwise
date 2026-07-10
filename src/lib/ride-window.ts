@@ -1,11 +1,12 @@
 import { HourlyWeather, ParsedRoute, RideWindow } from "./types";
 import { tailwindComponent, bearing } from "./geo-utils";
 import { PRECIP_PENALTY_FACTOR, RIDE_WINDOW_HOURS } from "@/constants";
-import { estimateRideDuration } from "./weather-client";
+import { estimateRideDuration, toWallClockHour } from "./weather-client";
 
 export function findBestRideWindows(
   hourly: HourlyWeather[],
-  route: ParsedRoute
+  route: ParsedRoute,
+  utcOffsetSeconds: number
 ): RideWindow[] {
   const { coordinates, midpointIndex, isClockwise, totalDistanceKm } = route;
   const rideDuration = Math.ceil(estimateRideDuration(totalDistanceKm));
@@ -19,16 +20,11 @@ export function findBestRideWindows(
     coordinates[0]
   );
 
-  const now = new Date();
-  const localYear = now.getFullYear();
-  const localMonth = String(now.getMonth() + 1).padStart(2, "0");
-  const localDay = String(now.getDate()).padStart(2, "0");
-  const localHour = String(now.getHours()).padStart(2, "0");
-  const nowHourStr = `${localYear}-${localMonth}-${localDay}T${localHour}`;
+  const nowWall = toWallClockHour(new Date(), utcOffsetSeconds);
 
   // Filter to future hours only, up to RIDE_WINDOW_HOURS ahead
   const futureHours = hourly.filter((h) => {
-    return h.time >= nowHourStr;
+    return h.time.slice(0, 13) >= nowWall;
   }).slice(0, RIDE_WINDOW_HOURS);
 
   const windows: RideWindow[] = futureHours.map((h) => {

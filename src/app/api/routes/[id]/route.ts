@@ -25,7 +25,7 @@ export async function GET(
     2,
     Math.ceil((departure.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) + 1
   );
-  const { hourly, sunTimes } = await fetchWeatherServer(
+  const { hourly, sunTimes, utcOffsetSeconds } = await fetchWeatherServer(
     row.centroidLat,
     row.centroidLng,
     Math.min(daysAhead, 16)
@@ -33,7 +33,7 @@ export async function GET(
 
   const parsedRoute = dbRowToParsedRoute(row);
   const duration = estimateRideDuration(row.distanceKm);
-  const weather = getWeatherForWindow(hourly, sunTimes, departure, duration);
+  const weather = getWeatherForWindow(hourly, sunTimes, departure, duration, utcOffsetSeconds);
   const recommendation = getRecommendation(parsedRoute, weather);
 
   const shouldReverse = recommendation.direction === "reverse";

@@ -4,6 +4,7 @@ import { HourlyWeather, SunTimes } from "./types";
 interface WeatherServerResponse {
   hourly: HourlyWeather[];
   sunTimes: SunTimes[];
+  utcOffsetSeconds: number;
 }
 
 // In-memory cache — survives across requests in dev and serverless warm starts
@@ -72,7 +73,11 @@ export async function fetchWeatherServer(
     sunset: daily.sunset[i],
   }));
 
-  const result = { hourly, sunTimes };
+  const result = {
+    hourly,
+    sunTimes,
+    utcOffsetSeconds: data.utc_offset_seconds ?? 0,
+  };
   weatherCache.set(cacheKey, { data: result, timestamp: Date.now() });
   return result;
 }

@@ -5,6 +5,16 @@ import { ASSUMED_SPEED_KMH } from "@/constants";
 interface WeatherResponse {
   hourly: HourlyWeather[];
   sunTimes: SunTimes[];
+  utcOffsetSeconds: number;
+}
+
+// Forecast times are wall-clock strings in the route's timezone. Convert an
+// absolute instant to that wall clock ("YYYY-MM-DDTHH") so comparisons never
+// depend on the runtime's timezone (UTC on Vercel, local in the browser).
+export function toWallClockHour(date: Date, utcOffsetSeconds: number): string {
+  return new Date(date.getTime() + utcOffsetSeconds * 1000)
+    .toISOString()
+    .slice(0, 13);
 }
 
 export async function fetchWeather(
@@ -22,23 +32,29 @@ export async function fetchWeather(
   }
 
   const data = await response.json();
-  return { hourly: data.hourly, sunTimes: data.sunTimes };
+  return {
+    hourly: data.hourly,
+    sunTimes: data.sunTimes,
+    utcOffsetSeconds: data.utcOffsetSeconds ?? 0,
+  };
 }
 
 export function getWeatherForWindow(
   hourly: HourlyWeather[],
   sunTimes: SunTimes[],
   departureTime: Date,
-  rideDurationHours: number
+  rideDurationHours: number,
+  utcOffsetSeconds: number
 ): WeatherData {
-  const startHour = departureTime.getHours();
-  const endHour = startHour + Math.ceil(rideDurationHours);
+  const startWall = toWallClockHour(departureTime, utcOffsetSeconds);
+  const endWall = toWallClockHour(
+    new Date(departureTime.getTime() + Math.ceil(rideDurationHours) * 3600_000),
+    utcOffsetSeconds
+  );
 
-  const departureDate = departureTime.toISOString().split("T")[0];
   const relevantHours = hourly.filter((h) => {
-    const hourDate = h.time.split("T")[0];
-    const hourNum = parseInt(h.time.split("T")[1].split(":")[0]);
-    return hourDate === departureDate && hourNum >= startHour && hourNum <= endHour;
+    const wall = h.time.slice(0, 13);
+    return wall >= startWall && wall <= endWall;
   });
 
   const windowHours =
@@ -95,17 +111,13 @@ export function estimateRideDuration(distanceKm: number): number {
 
 export function getWeatherSnapshot(
   hourly: HourlyWeather[],
-  at: Date
+  at: Date,
+  utcOffsetSeconds: number
 ): WeatherData | null {
   if (hourly.length === 0) return null;
 
-  const targetDate = at.toISOString().split("T")[0];
-  const targetHour = at.getHours();
-
-  const exact = hourly.find((h) => {
-    const [d, t] = h.time.split("T");
-    return d === targetDate && parseInt(t.split(":")[0]) === targetHour;
-  });
+  const targetWall = toWallClockHour(at, utcOffsetSeconds);
+  const exact = hourly.find((h) => h.time.slice(0, 13) === targetWall);
 
   const hour = exact ?? hourly[0];
   return {

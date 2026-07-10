@@ -29,14 +29,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
       // Add live wind recommendation to share preview
       try {
-        const { hourly, sunTimes } = await fetchWeatherServer(
+        const { hourly, sunTimes, utcOffsetSeconds } = await fetchWeatherServer(
           route.centroidLat,
           route.centroidLng,
           2
         );
         const parsedRoute = dbRowToParsedRoute(route);
         const duration = estimateRideDuration(route.distanceKm);
-        const weather = getWeatherForWindow(hourly, sunTimes, new Date(), duration);
+        const weather = getWeatherForWindow(hourly, sunTimes, new Date(), duration, utcOffsetSeconds);
         const rec = getRecommendation(parsedRoute, weather);
 
         const windDir = compassDirection(weather.windDirectionDeg);

@@ -32,8 +32,8 @@ export function useWeather(): UseWeather {
       try {
         const departure = departureTime || new Date();
         const duration = estimateRideDuration(route.totalDistanceKm);
-        const { hourly, sunTimes } = await fetchWeather(route.coordinates);
-        const weather = getWeatherForWindow(hourly, sunTimes, departure, duration);
+        const { hourly, sunTimes, utcOffsetSeconds } = await fetchWeather(route.coordinates);
+        const weather = getWeatherForWindow(hourly, sunTimes, departure, duration, utcOffsetSeconds);
         const recommendation = getRecommendation(route, weather);
 
         const shouldReverse = recommendation.direction === "reverse";

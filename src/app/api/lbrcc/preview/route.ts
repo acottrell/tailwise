@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const forecastDays = Math.max(daysAhead + 1, 2);
-    const { hourly, sunTimes } = await fetchWeatherServer(
+    const { hourly, sunTimes, utcOffsetSeconds } = await fetchWeatherServer(
       route.centroidLat,
       route.centroidLng,
       forecastDays
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 
     const parsedRoute = dbRowToParsedRoute(route);
     const duration = estimateRideDuration(route.distanceKm);
-    const weather = getWeatherForWindow(hourly, sunTimes, departure, duration);
+    const weather = getWeatherForWindow(hourly, sunTimes, departure, duration, utcOffsetSeconds);
     const recommendation = getRecommendation(parsedRoute, weather);
 
     return NextResponse.json({

@@ -65,5 +65,9 @@ export async function GET(request: NextRequest) {
     sunset: daily.sunset[i],
   }));
 
-  return NextResponse.json({ hourly: hours, sunTimes });
+  return NextResponse.json({
+    hourly: hours,
+    sunTimes,
+    utcOffsetSeconds: data.utc_offset_seconds ?? 0,
+  });
 }
