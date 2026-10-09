@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Coordinate } from "@/lib/types";
 
-interface CafePosition {
+export interface CafePosition {
   distanceKm: number;
   percent: number;
   reversed?: boolean;
@@ -53,7 +53,7 @@ function getCentroid(coords: Coordinate[]) {
   return { lat: lat / coords.length, lng: lng / coords.length };
 }
 
-function formatPosition(pos: CafePosition, totalDistanceKm: number): string {
+export function formatPosition(pos: CafePosition, totalDistanceKm: number): string {
   const cafeMi = Math.round(pos.distanceKm / 1.609344);
   const totalMi = Math.round(totalDistanceKm / 1.609344);
   return `Mile ${cafeMi} of ${totalMi}${pos.reversed ? " in reverse" : ""}`;
