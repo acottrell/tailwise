@@ -212,7 +212,7 @@ async function geocodeCafes(
       const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&limit=10&viewbox=${viewbox}&bounded=1`;
       const res = await fetch(url, {
         headers: {
-          "User-Agent": "tailwise/1.0 (https://tailwise-cycle.vercel.app)",
+          "User-Agent": "tailwise/1.0 (https://www.tailwise.cc)",
         },
       });
       const data: { lat: string; lon: string }[] = await res.json();
