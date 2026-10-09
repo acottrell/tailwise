@@ -110,6 +110,12 @@ export default function RoutePage() {
                   segmentColors={detail.segmentColors}
                   windDirectionDeg={detail.weather.windDirectionDeg}
                   windSpeedMph={detail.weather.windSpeedMph}
+                  cafeStop={detail.route.cafeStop}
+                  cafeLat={detail.route.cafeLat}
+                  cafeLng={detail.route.cafeLng}
+                  cafePosition={detail.route.cafePosition}
+                  cafeStops={detail.route.cafeStops}
+                  totalDistanceKm={detail.route.distanceKm}
                 />
                 <DeparturePicker
                   sunTimes={detail.weather.sunTimes}
