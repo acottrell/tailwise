@@ -2,7 +2,7 @@
 
 **Wind-optimised cycling route recommendations so you always have a tailwind on the way home.**
 
-[Live site](https://tailwise-cycle.vercel.app/) - Built for cyclists in and around Leighton Buzzard, UK.
+[Live site](https://www.tailwise.cc/) - Built for cyclists in and around Leighton Buzzard, UK.
 
 ![Tailwise desktop feed](docs/tailwise-desktop.png)
 

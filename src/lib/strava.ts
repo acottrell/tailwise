@@ -79,6 +79,15 @@ export async function fetchStravaRoute(
     if (response.status === 401) {
       throw new Error("UNAUTHORIZED");
     }
+    if (response.status === 403) {
+      // App-level block (e.g. Strava marks the API application "Inactive"
+      // when the owning account loses its subscription). Not the
+      // submitter's fault, so keep the detail in the logs.
+      console.error(`Strava 403 for route ${routeId}:`, await response.text());
+      throw new Error(
+        "Route import from Strava is temporarily unavailable. Please try again later."
+      );
+    }
     throw new Error(`Failed to fetch route: ${response.status}`);
   }
 
